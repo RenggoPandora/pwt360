@@ -27,6 +27,9 @@ export interface SupabaseCameraRow {
 
 // Convert database snake_case row to frontend camelCase DashboardCamera
 export function mapRowToDashboardCamera(row: any): DashboardCamera {
+  const parsedLat = parseFloat(row.lat);
+  const parsedLng = parseFloat(row.lng);
+
   return {
     id: row.id,
     number: row.number,
@@ -38,8 +41,8 @@ export function mapRowToDashboardCamera(row: any): DashboardCamera {
     time: row.time || "11.26",
     mapX: Number(row.map_x ?? 50),
     mapY: Number(row.map_y ?? 50),
-    lat: Number(row.lat),
-    lng: Number(row.lng),
+    lat: Number.isFinite(parsedLat) ? parsedLat : -7.4244,
+    lng: Number.isFinite(parsedLng) ? parsedLng : 109.2302,
     streamUrl: row.stream_url,
     streamType: row.stream_type || "hls",
     youtubeVideoId: row.youtube_video_id || undefined,

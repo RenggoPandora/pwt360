@@ -62,6 +62,12 @@ export default function AdminPinMap({
     cameras.forEach((cam) => {
       const isSelected = selectedCamera?.id === cam.id;
       const isHidden = cam.status === "hidden";
+      const lat = Number(cam.lat);
+      const lng = Number(cam.lng);
+
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        return;
+      }
 
       const pinBg = isHidden
         ? "#94A3B8"
@@ -134,7 +140,7 @@ export default function AdminPinMap({
         iconAnchor: [pinSize / 2, pinSize / 2],
       });
 
-      const marker = L.marker([cam.lat, cam.lng], {
+      const marker = L.marker([lat, lng], {
         icon: customIcon,
         draggable: isSelected, // Pin can be dragged on map when selected!
       });
@@ -156,9 +162,14 @@ export default function AdminPinMap({
 
   // Pan to selected camera
   useEffect(() => {
-    if (selectedCamera && mapInstanceRef.current) {
+    if (!selectedCamera || !mapInstanceRef.current) return;
+
+    const lat = Number(selectedCamera.lat);
+    const lng = Number(selectedCamera.lng);
+
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
       mapInstanceRef.current.flyTo(
-        [selectedCamera.lat, selectedCamera.lng],
+        [lat, lng],
         mapInstanceRef.current.getZoom(),
         { duration: 0.8 }
       );

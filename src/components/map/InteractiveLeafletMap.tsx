@@ -74,7 +74,13 @@ export default function InteractiveLeafletMap({
     markersRef.current = {};
 
     visibleCameras.forEach((cam) => {
-      const isSelected = selectedCamera.id === cam.id;
+      const isSelected = selectedCamera?.id === cam.id;
+      const lat = Number(cam.lat);
+      const lng = Number(cam.lng);
+
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        return;
+      }
 
       const pinBg =
         cam.category === "traffic"
@@ -150,7 +156,7 @@ export default function InteractiveLeafletMap({
         iconAnchor: [pinSize / 2, pinSize / 2],
       });
 
-      const marker = L.marker([cam.lat, cam.lng], { icon: customIcon });
+      const marker = L.marker([lat, lng], { icon: customIcon });
 
       marker.on("click", () => {
         onSelectCamera(cam);
@@ -163,14 +169,15 @@ export default function InteractiveLeafletMap({
 
   // Smooth flyTo selected camera
   useEffect(() => {
-    if (selectedCamera && mapInstanceRef.current) {
-      mapInstanceRef.current.flyTo(
-        [selectedCamera.lat, selectedCamera.lng],
-        15,
-        {
-          duration: 1.0,
-        }
-      );
+    if (!selectedCamera || !mapInstanceRef.current) return;
+
+    const lat = Number(selectedCamera.lat);
+    const lng = Number(selectedCamera.lng);
+
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      mapInstanceRef.current.flyTo([lat, lng], 15, {
+        duration: 1.0,
+      });
       setTimeout(() => {
         mapInstanceRef.current?.invalidateSize();
       }, 300);
