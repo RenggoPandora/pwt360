@@ -178,14 +178,64 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Hero H1 & Intro Sentence */}
-          <div className="space-y-2 max-w-3xl">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-heading text-[#2A2950] tracking-tight">
+          {/* Hero H1 & Explanatory Intro */}
+          <div className="space-y-3 max-w-4xl">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-heading text-[#2A2950] tracking-tight leading-[1.15]">
               Pantau kota, langsung dari layar.
             </h1>
             <p className="text-sm sm:text-base font-bold text-[#565A85] leading-relaxed">
-              Lihat posisi kamera di peta, cek cuaca sekitar, lalu pilih kategori untuk membuka siaran langsungnya.
+              PWT360 menyatukan siaran langsung CCTV publik, pemantauan arus lalu lintas, dan kondisi cuaca real-time di berbagai sudut Purwokerto dan Banyumas. Cek situasi simpang sebelum bepergian, pantau titik keramaian, atau jelajahi suasana kota lewat peta interaktif.
             </p>
+          </div>
+
+          {/* Notice & Disclaimer Banner */}
+          <div className="clay-inset p-4 sm:p-5 rounded-[24px] bg-[#DFE6F7]/85 border border-white/60 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-[#6B5CE7] text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="16" x2="12" y2="12" />
+                  <line x1="12" y1="8" x2="12.01" y2="8" />
+                </svg>
+              </div>
+              <div className="text-xs font-bold text-[#2A2950] leading-relaxed space-y-1">
+                <p>
+                  <strong className="text-[#6B5CE7]">Transparansi Data Publik:</strong> Seluruh siaran CCTV dihimpun dari portal publik resmi yang terbuka di internet (seperti ATCS Dishub dan Pemkab Banyumas). PWT360 tidak merekam, memodifikasi, atau mengoperasikan kamera privat.
+                </p>
+                <p className="text-[#565A85]">
+                  Bila Anda menemukan kesalahan nama persimpangan, pergeseran titik pin koordinat, atau kendala siaran kamera, silakan hubungi tim pengelola untuk segera kami perbaiki.
+                </p>
+              </div>
+            </div>
+
+            <a
+              href="mailto:hadoraworks@gmail.com?subject=Koreksi%20Kamera%20PWT360"
+              className="clay-chip px-4 py-2.5 bg-white hover:bg-slate-50 text-[#6B5CE7] hover:text-[#5848db] text-xs font-bold flex items-center gap-2 shrink-0 shadow-sm transition whitespace-nowrap self-stretch md:self-auto justify-center"
+            >
+              <svg
+                className="w-4 h-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect width="20" height="16" x="2" y="4" rx="2" />
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+              </svg>
+              <span>hadoraworks@gmail.com</span>
+            </a>
           </div>
         </header>
 
