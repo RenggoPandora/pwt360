@@ -168,15 +168,18 @@ export default function InteractiveLeafletMap({
           duration: 1.0,
         }
       );
+      setTimeout(() => {
+        mapInstanceRef.current?.invalidateSize();
+      }, 300);
     }
   }, [selectedCamera]);
 
   return (
-    <div className="clay-panel p-5 sm:p-7 flex flex-col flex-1 min-w-0 min-h-[580px] sm:min-h-[640px] relative">
+    <div className="clay-panel p-5 sm:p-7 flex flex-col flex-1 min-w-0 h-[620px] sm:h-[680px] relative shrink-0">
       {/* Inner Map Viewport with Clay Inset */}
-      <div className="clay-inset relative w-full h-full min-h-[540px] sm:min-h-[600px] rounded-[32px] overflow-hidden bg-[#CCD9F6]">
+      <div className="clay-inset relative w-full h-full rounded-[32px] overflow-hidden bg-[#CCD9F6]">
         {/* Leaflet Map Div */}
-        <div ref={mapContainerRef} className="w-full h-full min-h-[540px] sm:min-h-[600px] z-0" />
+        <div ref={mapContainerRef} className="w-full h-full z-0" />
 
         {/* Rain and Clouds Atmospheric Overlay (Decorative, pointer-events-none) */}
         {isRaining && (

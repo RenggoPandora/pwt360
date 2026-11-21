@@ -133,7 +133,7 @@ export default function Home() {
         <section
           id="main-map-section"
           aria-label="Peta dan Cuaca"
-          className="flex flex-col lg:flex-row items-stretch gap-7 sm:gap-8"
+          className="flex flex-col lg:flex-row items-start gap-7 sm:gap-8"
         >
           {/* Left Column: Pastel Map */}
           <PastelMap
