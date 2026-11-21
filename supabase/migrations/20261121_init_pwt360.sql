@@ -119,5 +119,3 @@ on conflict (id) do update set
   youtube_video_id = excluded.youtube_video_id,
   thumbnail_svg_type = excluded.thumbnail_svg_type,
   status = excluded.status;
-  lng = excluded.lng,
-  status = excluded.status;

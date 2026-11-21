@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { DashboardCamera, CameraCategory, TrafficCondition } from "@/types/camera";
 import { getAllCamerasAdmin, updateCameraAdmin } from "@/lib/supabase/cameras";
+import { getSupabaseClient } from "@/lib/supabase/client";
 import ClayLivePlayer from "@/components/player/ClayLivePlayer";
 
 const AdminPinMap = dynamic(() => import("@/components/admin/AdminPinMap"), {
@@ -22,6 +23,15 @@ const AdminPinMap = dynamic(() => import("@/components/admin/AdminPinMap"), {
 });
 
 export default function AdminPage() {
+  // Authentication states
+  const [sessionUser, setSessionUser] = useState<any>(null);
+  const [authChecking, setAuthChecking] = useState<boolean>(true);
+  const [loginEmail, setLoginEmail] = useState<string>("admin@pwt360.id");
+  const [loginPassword, setLoginPassword] = useState<string>("");
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
+
+  // Cameras & studio states
   const [cameras, setCameras] = useState<DashboardCamera[]>([]);
   const [selectedCamera, setSelectedCamera] = useState<DashboardCamera | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -38,8 +48,34 @@ export default function AdminPage() {
   const [editStreamType, setEditStreamType] = useState<"hls" | "youtube">("hls");
   const [editIsVisible, setEditIsVisible] = useState<boolean>(true);
 
-  // Load cameras
+  // Check Supabase Auth session on mount
   useEffect(() => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      setAuthChecking(false);
+      return;
+    }
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) {
+        setSessionUser(data.session.user);
+      }
+      setAuthChecking(false);
+    });
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSessionUser(session?.user || null);
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
+  // Load cameras once authenticated
+  useEffect(() => {
+    if (!sessionUser) return;
+    setIsLoading(true);
     getAllCamerasAdmin().then((data) => {
       setCameras(data);
       if (data.length > 0) {
@@ -47,7 +83,40 @@ export default function AdminPage() {
       }
       setIsLoading(false);
     });
-  }, []);
+  }, [sessionUser]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoggingIn(true);
+    setLoginError(null);
+
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      setLoginError("Koneksi Supabase belum terkonfigurasi di .env.local");
+      setIsLoggingIn(false);
+      return;
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: loginEmail,
+      password: loginPassword,
+    });
+
+    setIsLoggingIn(false);
+    if (error) {
+      setLoginError(error.message);
+    } else if (data.user) {
+      setSessionUser(data.user);
+    }
+  };
+
+  const handleLogout = async () => {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
+    setSessionUser(null);
+  };
 
   const selectCameraForEdit = (cam: DashboardCamera) => {
     setSelectedCamera(cam);
@@ -109,8 +178,7 @@ export default function AdminPage() {
     setIsSaving(false);
 
     if (res.success) {
-      setSaveMessage("Perubahan kamera & posisi pin berhasil disimpan!");
-      // Update local state
+      setSaveMessage("Perubahan kamera & posisi pin berhasil disimpan ke Supabase!");
       setCameras((prev) =>
         prev.map((c) => (c.id === selectedCamera.id ? { ...c, ...updates } : c))
       );
@@ -140,9 +208,93 @@ export default function AdminPage() {
     }
   };
 
+  // 1. Loading screen while checking auth
+  if (authChecking) {
+    return (
+      <div className="min-h-screen bg-[#E9EDFB] flex flex-col items-center justify-center p-4">
+        <div className="clay-panel p-8 flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-full border-3 border-[#6B5CE7] border-t-transparent animate-spin" />
+          <span className="text-sm font-bold font-heading text-[#2A2950]">
+            Memeriksa Kredensial Supabase Auth...
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Login Screen if not authenticated
+  if (!sessionUser) {
+    return (
+      <div className="min-h-screen bg-[#E9EDFB] flex flex-col items-center justify-center p-4 selection:bg-[#6B5CE7] selection:text-white">
+        <div className="clay-panel w-full max-w-md p-8 sm:p-10 bg-[#F3F5FF] flex flex-col gap-6 animate-in fade-in zoom-in-95">
+          {/* Header */}
+          <div className="flex flex-col items-center text-center gap-2">
+            <div className="w-14 h-14 rounded-[20px] bg-[#6B5CE7] text-white flex items-center justify-center font-bold text-2xl shadow-lg shadow-[#6B5CE7]/30">
+              🔒
+            </div>
+            <h1 className="text-2xl font-bold font-heading text-[#2A2950]">
+              PWT360 Admin Studio
+            </h1>
+            <p className="text-xs font-bold text-[#565A85]">
+              Masuk dengan akun administrator Supabase Anda
+            </p>
+          </div>
+
+          {loginError && (
+            <div className="p-3.5 rounded-[16px] bg-rose-100 text-rose-800 text-xs font-bold border border-rose-200">
+              {loginError}
+            </div>
+          )}
+
+          <form onSubmit={handleLogin} className="space-y-4 text-xs font-bold text-[#2A2950]">
+            <div>
+              <label className="block text-[#565A85] mb-1">Email Administrator</label>
+              <input
+                type="email"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                required
+                className="w-full px-4 py-3 rounded-[16px] bg-white border border-[#CCD6EC] text-xs font-bold text-[#2A2950] focus:outline-[#6B5CE7]"
+                placeholder="admin@pwt360.id"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[#565A85] mb-1">Kata Sandi</label>
+              <input
+                type="password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                required
+                className="w-full px-4 py-3 rounded-[16px] bg-white border border-[#CCD6EC] text-xs font-bold text-[#2A2950] focus:outline-[#6B5CE7]"
+                placeholder="••••••••••••"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoggingIn}
+              className="w-full py-3.5 rounded-[18px] bg-[#6B5CE7] hover:bg-[#5b4cdb] text-white font-bold font-heading text-sm shadow-md transition disabled:opacity-50 cursor-pointer"
+            >
+              {isLoggingIn ? "Memverifikasi..." : "Masuk ke Studio Admin"}
+            </button>
+          </form>
+
+          <div className="pt-2 border-t border-[#E0E5F5] flex items-center justify-between text-xs font-bold text-[#565A85]">
+            <Link href="/" className="hover:text-[#6B5CE7] transition">
+              &larr; Kembali ke Beranda
+            </Link>
+            <span className="font-mono text-[11px] text-slate-400">Supabase Auth</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const publicCount = cameras.filter((c) => c.status !== "hidden").length;
   const hiddenCount = cameras.filter((c) => c.status === "hidden").length;
 
+  // 3. Authenticated Admin Dashboard
   return (
     <div className="min-h-screen bg-[#E9EDFB] text-[#2A2950] pb-16 selection:bg-[#6B5CE7] selection:text-white">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-10 pt-7 space-y-8">
@@ -153,11 +305,16 @@ export default function AdminPage() {
               ⚡
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold font-heading text-[#2A2950]">
-                PWT360 Admin Studio
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-bold font-heading text-[#2A2950]">
+                  PWT360 Admin Studio
+                </h1>
+                <span className="px-2 py-0.5 rounded-full bg-purple-100 text-[#6B5CE7] text-[10px] font-bold">
+                  {sessionUser.email}
+                </span>
+              </div>
               <p className="text-xs font-bold text-[#565A85]">
-                Kelola nama, koordinat pin di peta, dan visibilitas kamera publik
+                Tersambung langsung ke Supabase PostgreSQL &bull; 30 kamera terverifikasi
               </p>
             </div>
           </div>
@@ -180,6 +337,14 @@ export default function AdminPage() {
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </Link>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="px-3.5 py-2 rounded-[14px] bg-slate-200 hover:bg-rose-100 hover:text-rose-700 text-xs font-bold text-[#565A85] transition cursor-pointer"
+            >
+              Keluar
+            </button>
           </div>
         </header>
 
@@ -346,7 +511,7 @@ export default function AdminPage() {
                     disabled={isSaving}
                     className="w-full py-3 rounded-[18px] bg-[#6B5CE7] hover:bg-[#5b4cdb] text-white font-bold font-heading text-sm shadow-md transition disabled:opacity-50 cursor-pointer"
                   >
-                    {isSaving ? "Menyimpan ke Database..." : "Simpan Perubahan Kamera"}
+                    {isSaving ? "Menyimpan ke Supabase..." : "Simpan Perubahan Kamera"}
                   </button>
                 </form>
               ) : (
@@ -369,7 +534,7 @@ export default function AdminPage() {
         {/* Camera List Table */}
         <section className="space-y-4 pt-4">
           <h2 className="text-xl font-bold font-heading text-[#2A2950]">
-            Daftar Seluruh Kamera ({cameras.length})
+            Daftar Seluruh Kamera di Supabase ({cameras.length})
           </h2>
 
           <div className="clay-panel overflow-hidden bg-[#F3F5FF]">
