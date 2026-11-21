@@ -24,7 +24,7 @@
 | CCTV source research    | Completed   | 30 strictly verified active feeds (ATCS + YouTube) |
 | CCTV discovery          | Completed   | OSINT scanner + ATCS active stream recon |
 | CCTV validation         | Completed   | HLS & YouTube live stream validator   |
-| Interactive map         | Completed   | Pastel SVG map with floating clouds, rain, & 01-08 pins |
+| Interactive map         | Completed   | Interactive Leaflet (CartoDB Voyager) with custom clay pins & overlays |
 | Video playback          | Completed   | ClayLivePlayer split column + HLS/YouTube Live  |
 | Camera directory        | Completed   | 4-column cards with pastel illustrations & live badges |
 | Search and filtering    | Completed   | 5 category chips with exact count pills |
