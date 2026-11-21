@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import Link from "next/link";
 import WeatherCard from "@/components/WeatherCard";
 import PastelMap from "@/components/map/PastelMap";
 import FilterBar from "@/components/FilterBar";
@@ -9,6 +10,7 @@ import ClayLivePlayer from "@/components/player/ClayLivePlayer";
 import { DASHBOARD_CAMERAS } from "@/data/cameras";
 import { DashboardCamera, CameraCategory } from "@/types/camera";
 import { fetchLivePinWeather, DynamicWeather } from "@/lib/weather";
+import { getPublicCameras } from "@/lib/supabase/cameras";
 
 const DEFAULT_WEATHER: DynamicWeather = {
   temperature: 27,
@@ -29,7 +31,7 @@ const DEFAULT_WEATHER: DynamicWeather = {
 };
 
 export default function Home() {
-  const [cameras] = useState<DashboardCamera[]>(DASHBOARD_CAMERAS);
+  const [cameras, setCameras] = useState<DashboardCamera[]>(DASHBOARD_CAMERAS);
   const [selectedCamera, setSelectedCamera] = useState<DashboardCamera>(
     DASHBOARD_CAMERAS[0]
   );
@@ -40,6 +42,16 @@ export default function Home() {
   );
   const [weather, setWeather] = useState<DynamicWeather>(DEFAULT_WEATHER);
   const [isWeatherLoading, setIsWeatherLoading] = useState<boolean>(false);
+
+  // Load public cameras (from Supabase or local storage cache)
+  useEffect(() => {
+    getPublicCameras().then((data) => {
+      if (data && data.length > 0) {
+        setCameras(data);
+        setSelectedCamera((prev) => data.find((c) => c.id === prev.id) || data[0]);
+      }
+    });
+  }, []);
 
   // Fetch dynamic live weather for selected pin location using 100% free Open-Meteo
   useEffect(() => {
@@ -241,8 +253,16 @@ export default function Home() {
         </section>
 
         {/* 4. FOOTER */}
-        <footer className="pt-8 pb-4 text-center text-xs font-bold text-[#565A85]">
-          <p>Contoh desain &bull; data kamera, lokasi, dan cuaca hanya ilustrasi</p>
+        <footer className="pt-8 pb-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-bold text-[#565A85]">
+          <p>Contoh desain &bull; data kamera, lokasi, dan cuaca terhubung real-time</p>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/admin"
+              className="text-[#565A85] hover:text-[#6B5CE7] transition flex items-center gap-1.5"
+            >
+              <span>⚙️ Studio Admin</span>
+            </Link>
+          </div>
         </footer>
       </div>
     </div>

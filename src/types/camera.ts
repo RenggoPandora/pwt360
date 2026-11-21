@@ -28,7 +28,8 @@ export interface DashboardCamera {
   description?: string;
   locationName?: string;
   subdistrict?: string;
-  status?: string;
+  status?: "online" | "hidden" | "standby";
+  isVisible?: boolean;
   isOfficial?: boolean;
 }
 
