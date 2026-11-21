@@ -1,0 +1,38 @@
+import type { Metadata } from "next";
+import { Plus_Jakarta_Sans } from "next/font/google";
+import "./globals.css";
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  variable: "--font-plus-jakarta",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+});
+
+export const metadata: Metadata = {
+  title: "PWT360 — Purwokerto CCTV Discovery & City Exploration",
+  description:
+    "Jelajahi Purwokerto dari setiap sudut. Platform agregasi CCTV publik, pemantauan arus lalu lintas, dan eksplorasi ruang kota terintegrasi.",
+  keywords: [
+    "CCTV Purwokerto",
+    "ATCS Banyumas",
+    "Live CCTV Purwokerto",
+    "Pantau Jalan Purwokerto",
+    "PWT360",
+    "Traffic Banyumas",
+  ],
+  authors: [{ name: "PWT360 Community" }],
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="id" className={`${plusJakartaSans.variable} h-full antialiased`}>
+      <body className="min-h-full flex flex-col bg-[#F4F6FB] text-slate-800 font-sans">
+        {children}
+      </body>
+    </html>
+  );
+}
