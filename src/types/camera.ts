@@ -31,6 +31,7 @@ export interface DashboardCamera {
   status?: "online" | "hidden" | "standby";
   isVisible?: boolean;
   isOfficial?: boolean;
+  tier?: number;
 }
 
 export type Camera = DashboardCamera;

@@ -21,8 +21,8 @@
 | Technical architecture  | Completed   | Next.js 16 App Router, Tailwind 4, HLS.js |
 | Project initialization  | Completed   | Next.js 16 latest stable, TS, Tailwind |
 | Database design         | Completed   | Supabase PostgreSQL schema, RLS policies, 30 seeded cameras |
-| CCTV source research    | Completed   | 30 strictly verified active feeds (ATCS + YouTube) |
-| CCTV discovery          | Completed   | OSINT scanner + ATCS active stream recon |
+| CCTV source research    | Completed   | 20 verified official streams (banyumaskab.go.id & atcs.banyumaskab.go.id, zero YouTube) |
+| CCTV discovery          | Completed   | Pemkab & ATCS live m3u8 crawler & validator |
 | CCTV validation         | Completed   | HLS & YouTube live stream validator   |
 | Interactive map         | Completed   | Accurate 1:1 GPS coordinate matching with live ATCS feeds & condition-aware animations |
 | Video playback          | Completed   | ClayLivePlayer split column + HLS/YouTube Live  |
