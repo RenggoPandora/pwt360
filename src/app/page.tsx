@@ -13,21 +13,26 @@ import { fetchLivePinWeather, DynamicWeather } from "@/lib/weather";
 import { getPublicCameras } from "@/lib/supabase/cameras";
 
 const DEFAULT_WEATHER: DynamicWeather = {
-  temperature: 27,
-  conditionText: "Mendung, potensi hujan",
+  cityName: "Simpang Alun-Alun Purwokerto",
+  forecastTitle: "Prediksi Cuaca Lokasi",
+  conditionText: "Prediksi Hujan Lokal (Peluang 75%)",
   conditionType: "rainy",
   isRaining: true,
-  rainChance: 60,
-  humidity: 78,
-  windSpeed: 9,
+  temperature: 26,
+  maxExpectedTemp: 27,
+  minExpectedTemp: 24,
+  rainChance: 75,
+  peakRainTime: "15.00 WIB",
+  humidity: 86,
+  windSpeed: 6,
+  roadAdvisory: "Peluang hujan meningkat sekitar pukul 15.00 WIB. Waspadai jalanan basah dan persiapkan jas hujan.",
   hourly: [
-    { time: "12.00", temp: "28°", rain: false },
-    { time: "13.00", temp: "28°", rain: false },
-    { time: "14.00", temp: "27°", rain: true },
-    { time: "15.00", temp: "26°", rain: true },
-    { time: "16.00", temp: "26°", rain: true },
+    { time: "13.00", temp: 26, rainChance: 40, conditionType: "cloudy", conditionText: "Berawan" },
+    { time: "14.00", temp: 27, rainChance: 55, conditionType: "rainy", conditionText: "Gerimis" },
+    { time: "15.00", temp: 25, rainChance: 75, conditionType: "rainy", conditionText: "Hujan lokal" },
+    { time: "16.00", temp: 25, rainChance: 70, conditionType: "rainy", conditionText: "Hujan lokal" },
+    { time: "17.00", temp: 24, rainChance: 45, conditionType: "cloudy", conditionText: "Berawan" },
   ],
-  cityName: "Pusat Kota",
 };
 
 export default function Home() {
