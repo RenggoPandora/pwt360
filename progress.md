@@ -24,11 +24,11 @@
 | CCTV source research    | Completed   | 30 strictly verified active feeds (ATCS + YouTube) |
 | CCTV discovery          | Completed   | OSINT scanner + ATCS active stream recon |
 | CCTV validation         | Completed   | HLS & YouTube live stream validator   |
-| Interactive map         | Completed   | Interactive Leaflet (CartoDB Voyager) with custom clay pins & overlays |
+| Interactive map         | Completed   | Interactive Leaflet (OpenStreetMap pastel) with custom clay pins & dynamic rain |
 | Video playback          | Completed   | ClayLivePlayer split column + HLS/YouTube Live  |
 | Camera directory        | Completed   | 4-column cards with pastel illustrations & live badges |
 | Search and filtering    | Completed   | 5 category chips with exact count pills |
-| Weather integration     | Completed   | Claymorphic Weather Card with rain animation & hourly forecast |
+| Weather integration     | Completed   | Dynamic real-time weather per pin via free Open-Meteo API |
 | Multi-camera monitoring | Completed   | 2x2 multi-camera grid wall            |
 | Administration          | Completed   | 1-Click OSINT staging review queue    |
 | Testing                 | Completed   | Production build passes 0 errors      |

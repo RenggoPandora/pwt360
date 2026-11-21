@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import WeatherCard from "@/components/WeatherCard";
 import PastelMap from "@/components/map/PastelMap";
 import FilterBar from "@/components/FilterBar";
@@ -8,6 +8,24 @@ import CameraCard from "@/components/CameraCard";
 import ClayLivePlayer from "@/components/player/ClayLivePlayer";
 import { DASHBOARD_CAMERAS } from "@/data/cameras";
 import { DashboardCamera, CameraCategory } from "@/types/camera";
+import { fetchLivePinWeather, DynamicWeather } from "@/lib/weather";
+
+const DEFAULT_WEATHER: DynamicWeather = {
+  temperature: 27,
+  conditionText: "Mendung, potensi hujan",
+  isRaining: true,
+  rainChance: 60,
+  humidity: 78,
+  windSpeed: 9,
+  hourly: [
+    { time: "12.00", temp: "28°", rain: false },
+    { time: "13.00", temp: "28°", rain: false },
+    { time: "14.00", temp: "27°", rain: true },
+    { time: "15.00", temp: "26°", rain: true },
+    { time: "16.00", temp: "26°", rain: true },
+  ],
+  cityName: "Pusat Kota",
+};
 
 export default function Home() {
   const [cameras] = useState<DashboardCamera[]>(DASHBOARD_CAMERAS);
@@ -19,6 +37,29 @@ export default function Home() {
   const [activeCategory, setActiveCategory] = useState<CameraCategory | "all">(
     "all"
   );
+  const [weather, setWeather] = useState<DynamicWeather>(DEFAULT_WEATHER);
+  const [isWeatherLoading, setIsWeatherLoading] = useState<boolean>(false);
+
+  // Fetch dynamic live weather for selected pin location using 100% free Open-Meteo
+  useEffect(() => {
+    let isCancelled = false;
+    setIsWeatherLoading(true);
+
+    fetchLivePinWeather(
+      selectedCamera.lat,
+      selectedCamera.lng,
+      selectedCamera.name
+    ).then((data) => {
+      if (!isCancelled) {
+        setWeather(data);
+        setIsWeatherLoading(false);
+      }
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [selectedCamera.lat, selectedCamera.lng, selectedCamera.name]);
 
   // Category counts
   const counts = useMemo(() => {
@@ -71,7 +112,7 @@ export default function Home() {
                 >
                   <circle cx="12" cy="12" r="10" />
                   <line x1="2" y1="12" x2="22" y2="12" />
-                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z" />
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
                 </svg>
               </div>
               <div>
@@ -135,13 +176,13 @@ export default function Home() {
           aria-label="Peta dan Cuaca"
           className="flex flex-col lg:flex-row items-start gap-7 sm:gap-8"
         >
-          {/* Left Column: Pastel Map */}
+          {/* Left Column: Pastel Map with Real Live Rain overlay */}
           <PastelMap
             cameras={cameras}
             selectedCamera={selectedCamera}
             onSelectCamera={handleSelectCamera}
             activeCategory={activeCategory}
-            rainChance={60}
+            rainChance={weather.rainChance}
           />
 
           {/* Right Column: Splits into Live CCTV on Top + Weather Card Below */}
@@ -154,10 +195,11 @@ export default function Home() {
               />
             )}
 
-            {/* Bottom Section: Weather Card */}
+            {/* Bottom Section: Dynamic Weather Card */}
             <WeatherCard
-              rainChance={60}
+              weather={weather}
               isSplit={Boolean(activeLiveCamera)}
+              isLoading={isWeatherLoading}
             />
           </div>
         </section>

@@ -1,51 +1,61 @@
 "use client";
 
+import { DynamicWeather } from "@/lib/weather";
+
 interface WeatherCardProps {
-  rainChance?: number;
+  weather: DynamicWeather;
   isSplit?: boolean;
+  isLoading?: boolean;
 }
 
 export default function WeatherCard({
-  rainChance = 60,
+  weather,
   isSplit = false,
+  isLoading = false,
 }: WeatherCardProps) {
-  const isRaining = rainChance >= 50;
+  const isRaining = weather.isRaining || weather.rainChance >= 50;
 
   // Compact Mode when CCTV is open
   if (isSplit) {
     return (
-      <div className="clay-panel p-4 sm:p-5 flex flex-col gap-3 w-full bg-[#F3F5FF] transition-all duration-300 animate-in fade-in zoom-in-95">
+      <div
+        className={`clay-panel p-4 sm:p-5 flex flex-col gap-3 w-full bg-[#F3F5FF] transition-all duration-300 animate-in fade-in zoom-in-95 ${
+          isLoading ? "opacity-75" : ""
+        }`}
+      >
         {/* Compact Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h2 className="text-base sm:text-lg font-bold text-[#2A2950] font-heading">
+          <div className="flex items-center gap-2 min-w-0">
+            <h2 className="text-base sm:text-lg font-bold text-[#2A2950] font-heading shrink-0">
               Cuaca Sekarang
             </h2>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E9EDFB] text-[#565A85]">
-              Pusat Kota
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E9EDFB] text-[#565A85] truncate max-w-[140px]">
+              {weather.cityName || "Pusat Kota"}
             </span>
           </div>
-          <span className="text-xs font-bold text-[#2A2950] font-heading">
-            27°C &bull; Mendung
+          <span className="text-xs font-bold text-[#2A2950] font-heading shrink-0">
+            {weather.temperature}°C &bull; {isRaining ? "Hujan" : "Cerah"}
           </span>
         </div>
 
         {/* Compact Hero Tile */}
         <div
-          className={`clay-inset p-3 rounded-[20px] flex items-center justify-between ${
+          className={`clay-inset p-3 rounded-[20px] flex items-center justify-between transition-colors duration-300 ${
             isRaining ? "bg-[#D2DEFB]" : "bg-[#FFE7B3]"
           }`}
         >
           <div className="flex items-center gap-3">
             <div className="text-3xl sm:text-4xl font-bold text-[#2A2950] font-heading leading-none">
-              27°
+              {weather.temperature}°
             </div>
             <div className="leading-tight">
               <p className="text-xs font-bold text-[#2A2950]">
-                {isRaining ? "Mendung, potensi hujan" : "Cerah berawan"}
+                {weather.conditionText}
               </p>
               <p className="text-[10px] font-bold text-[#565A85]">
-                {isRaining ? "Peluang hujan 60% &bull; Bawa payung" : "Kondisi kering normal"}
+                {isRaining
+                  ? `Peluang hujan ${weather.rainChance}% • Bawa payung`
+                  : "Kondisi kering normal"}
               </p>
             </div>
           </div>
@@ -76,29 +86,29 @@ export default function WeatherCard({
         <div className="grid grid-cols-3 gap-2">
           <div className="clay-inset bg-[#E9EDFB] rounded-[16px] py-1.5 px-2 flex flex-col items-center justify-center text-center">
             <span className="text-[10px] font-bold text-[#565A85]">Lembap</span>
-            <span className="text-xs sm:text-sm font-bold text-[#2A2950] font-heading">78%</span>
+            <span className="text-xs sm:text-sm font-bold text-[#2A2950] font-heading">
+              {weather.humidity}%
+            </span>
           </div>
 
           <div className="clay-inset bg-[#E9EDFB] rounded-[16px] py-1.5 px-2 flex flex-col items-center justify-center text-center">
             <span className="text-[10px] font-bold text-[#565A85]">Angin</span>
-            <span className="text-xs sm:text-sm font-bold text-[#2A2950] font-heading">9 km/j</span>
+            <span className="text-xs sm:text-sm font-bold text-[#2A2950] font-heading">
+              {weather.windSpeed} km/j
+            </span>
           </div>
 
           <div className="clay-inset bg-[#E9EDFB] rounded-[16px] py-1.5 px-2 flex flex-col items-center justify-center text-center">
             <span className="text-[10px] font-bold text-[#565A85]">Hujan</span>
-            <span className="text-xs sm:text-sm font-bold text-[#2A2950] font-heading">{rainChance}%</span>
+            <span className="text-xs sm:text-sm font-bold text-[#2A2950] font-heading">
+              {weather.rainChance}%
+            </span>
           </div>
         </div>
 
         {/* Compact Hourly Forecast */}
         <div className="pt-1 border-t border-[#E0E5F5]/60 flex items-center justify-between text-center px-1">
-          {[
-            { time: "12.00", temp: "28°", rain: false },
-            { time: "13.00", temp: "28°", rain: false },
-            { time: "14.00", temp: "27°", rain: true },
-            { time: "15.00", temp: "26°", rain: true },
-            { time: "16.00", temp: "26°", rain: true },
-          ].map((item, idx) => (
+          {weather.hourly.map((item, idx) => (
             <div key={idx} className="flex flex-col items-center gap-0.5">
               <span className="text-[9px] font-bold text-[#565A85]">{item.time}</span>
               <div className="w-5 h-5 flex items-center justify-center">
@@ -123,14 +133,18 @@ export default function WeatherCard({
 
   // Full-size Mode when no CCTV is open (Initial Default)
   return (
-    <div className="clay-panel p-7 sm:p-8 flex flex-col gap-6 w-full lg:w-[380px] xl:w-[420px] shrink-0 transition-all duration-300">
+    <div
+      className={`clay-panel p-7 sm:p-8 flex flex-col gap-6 w-full lg:w-[380px] xl:w-[420px] shrink-0 transition-all duration-300 ${
+        isLoading ? "opacity-75" : ""
+      }`}
+    >
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl sm:text-2xl font-bold text-[#2A2950] font-heading">
           Cuaca Sekarang
         </h2>
-        <span className="text-xs font-bold text-[#565A85] tracking-wide">
-          Pusat Kota
+        <span className="text-xs font-bold text-[#565A85] tracking-wide max-w-[160px] truncate">
+          {weather.cityName || "Pusat Kota"}
         </span>
       </div>
 
@@ -142,10 +156,10 @@ export default function WeatherCard({
       >
         <div>
           <div className="text-6xl sm:text-7xl font-bold text-[#2A2950] tracking-tight leading-none mb-1.5 font-heading">
-            27°
+            {weather.temperature}°
           </div>
           <p className="text-xs sm:text-sm font-bold text-[#2A2950] max-w-[130px] leading-snug">
-            {isRaining ? "Mendung, potensi hujan" : "Cerah berawan"}
+            {weather.conditionText}
           </p>
         </div>
 
@@ -192,7 +206,7 @@ export default function WeatherCard({
             </svg>
           </div>
           <p className="text-xs font-bold text-[#2A2950] leading-snug">
-            Potensi hujan tinggi ({rainChance}%). Bawa payung &amp; waspadai genangan.
+            Potensi hujan tinggi ({weather.rainChance}%). Bawa payung &amp; waspadai genangan.
           </p>
         </div>
       )}
@@ -201,17 +215,23 @@ export default function WeatherCard({
       <div className="grid grid-cols-3 gap-2.5">
         <div className="clay-inset bg-[#E9EDFB] rounded-[20px] py-3 px-2 flex flex-col items-center justify-center text-center">
           <span className="text-[10px] sm:text-[11px] font-bold text-[#565A85] mb-0.5">Lembap</span>
-          <span className="text-sm sm:text-base font-bold text-[#2A2950] font-heading">78%</span>
+          <span className="text-sm sm:text-base font-bold text-[#2A2950] font-heading">
+            {weather.humidity}%
+          </span>
         </div>
 
         <div className="clay-inset bg-[#E9EDFB] rounded-[20px] py-3 px-2 flex flex-col items-center justify-center text-center">
           <span className="text-[10px] sm:text-[11px] font-bold text-[#565A85] mb-0.5">Angin</span>
-          <span className="text-sm sm:text-base font-bold text-[#2A2950] font-heading">9 km/j</span>
+          <span className="text-sm sm:text-base font-bold text-[#2A2950] font-heading">
+            {weather.windSpeed} km/j
+          </span>
         </div>
 
         <div className="clay-inset bg-[#E9EDFB] rounded-[20px] py-3 px-2 flex flex-col items-center justify-center text-center">
           <span className="text-[10px] sm:text-[11px] font-bold text-[#565A85] mb-0.5">Hujan</span>
-          <span className="text-sm sm:text-base font-bold text-[#2A2950] font-heading">{rainChance}%</span>
+          <span className="text-sm sm:text-base font-bold text-[#2A2950] font-heading">
+            {weather.rainChance}%
+          </span>
         </div>
       </div>
 
@@ -219,13 +239,7 @@ export default function WeatherCard({
       <div>
         <h4 className="text-xs font-bold text-[#565A85] mb-2.5">Perkiraan per jam</h4>
         <div className="grid grid-cols-5 gap-1.5 text-center">
-          {[
-            { time: "12.00", temp: "28°", rain: false },
-            { time: "13.00", temp: "28°", rain: false },
-            { time: "14.00", temp: "27°", rain: true },
-            { time: "15.00", temp: "26°", rain: true },
-            { time: "16.00", temp: "26°", rain: true },
-          ].map((item, idx) => (
+          {weather.hourly.map((item, idx) => (
             <div key={idx} className="flex flex-col items-center gap-1">
               <span className="text-[10px] sm:text-[11px] font-bold text-[#565A85]">{item.time}</span>
               <div className="w-7 h-7 flex items-center justify-center">
