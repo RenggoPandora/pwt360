@@ -17,7 +17,7 @@
 | Area                    | Status      | Notes                                 |
 | ----------------------- | ----------- | ------------------------------------- |
 | Product definition      | Completed   | Initial product brief established     |
-| Visual direction        | Completed   | Claymorphism per DesignBrief.md, clean explanatory hero & source disclaimer |
+| Visual direction        | Completed   | Fullscreen Hero Welcome section, Claymorphism dashboard, and live CCTV map |
 | Technical architecture  | Completed   | Next.js 16 App Router, Tailwind 4, HLS.js |
 | Project initialization  | Completed   | Next.js 16 latest stable, TS, Tailwind |
 | Database design         | Completed   | Supabase PostgreSQL schema, RLS policies, 30 seeded cameras |

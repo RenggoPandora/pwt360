@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import HeroWelcome from "@/components/HeroWelcome";
 import WeatherCard from "@/components/WeatherCard";
 import PastelMap from "@/components/map/PastelMap";
 import FilterBar from "@/components/FilterBar";
@@ -113,11 +114,27 @@ export default function Home() {
     }
   };
 
+  const handleScrollToDashboard = () => {
+    const dashboardSection = document.getElementById("dashboard-section");
+    if (dashboardSection) {
+      dashboardSection.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#E9EDFB] text-[#2A2950] selection:bg-[#6B5CE7] selection:text-white pb-14">
-      {/* Container with max-width 1440px and responsive padding */}
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-10 pt-7 sm:pt-9 space-y-9 sm:space-y-11">
-        {/* 1. HERO SECTION */}
+      {/* 0. NEW HERO WELCOME SECTION (Full Viewport, Centered Catchy Copy, Ambient Background) */}
+      <HeroWelcome
+        onExploreClick={handleScrollToDashboard}
+        totalCameras={cameras.length}
+      />
+
+      {/* Main Dashboard Container */}
+      <div
+        id="dashboard-section"
+        className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-10 pt-10 sm:pt-14 space-y-9 sm:space-y-11"
+      >
+        {/* 1. DASHBOARD HEADER */}
         <header className="space-y-6">
           {/* Top Bar: Brand & Live Pills */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
