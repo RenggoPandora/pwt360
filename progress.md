@@ -25,7 +25,7 @@
 | CCTV discovery          | Completed   | OSINT scanner + ATCS active stream recon |
 | CCTV validation         | Completed   | HLS & YouTube live stream validator   |
 | Interactive map         | Completed   | Pastel SVG map with floating clouds, rain, & 01-08 pins |
-| Video playback          | Completed   | LiveStreamModal (HLS.js + YouTube Live)  |
+| Video playback          | Completed   | ClayLivePlayer split column + HLS/YouTube Live  |
 | Camera directory        | Completed   | 4-column cards with pastel illustrations & live badges |
 | Search and filtering    | Completed   | 5 category chips with exact count pills |
 | Weather integration     | Completed   | Claymorphic Weather Card with rain animation & hourly forecast |

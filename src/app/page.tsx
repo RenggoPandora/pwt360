@@ -5,7 +5,7 @@ import WeatherCard from "@/components/WeatherCard";
 import PastelMap from "@/components/map/PastelMap";
 import FilterBar from "@/components/FilterBar";
 import CameraCard from "@/components/CameraCard";
-import LiveStreamModal from "@/components/player/LiveStreamModal";
+import ClayLivePlayer from "@/components/player/ClayLivePlayer";
 import { DASHBOARD_CAMERAS } from "@/data/cameras";
 import { DashboardCamera, CameraCategory } from "@/types/camera";
 
@@ -14,11 +14,10 @@ export default function Home() {
   const [selectedCamera, setSelectedCamera] = useState<DashboardCamera>(
     DASHBOARD_CAMERAS[0]
   );
+  const [activeLiveCamera, setActiveLiveCamera] =
+    useState<DashboardCamera | null>(null);
   const [activeCategory, setActiveCategory] = useState<CameraCategory | "all">(
     "all"
-  );
-  const [playingCamera, setPlayingCamera] = useState<DashboardCamera | null>(
-    null
   );
 
   // Category counts
@@ -37,6 +36,17 @@ export default function Home() {
     if (activeCategory === "all") return cameras;
     return cameras.filter((c) => c.category === activeCategory);
   }, [cameras, activeCategory]);
+
+  const handleSelectCamera = (cam: DashboardCamera) => {
+    setSelectedCamera(cam);
+    setActiveLiveCamera(cam);
+
+    // Scroll up smoothly if user is down on the card grid
+    const mainSection = document.getElementById("main-map-section");
+    if (mainSection && window.scrollY > mainSection.offsetTop + 200) {
+      mainSection.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#E9EDFB] text-[#2A2950] selection:bg-[#6B5CE7] selection:text-white pb-14">
@@ -61,7 +71,7 @@ export default function Home() {
                 >
                   <circle cx="12" cy="12" r="10" />
                   <line x1="2" y1="12" x2="22" y2="12" />
-                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z" />
                 </svg>
               </div>
               <div>
@@ -119,8 +129,9 @@ export default function Home() {
           </div>
         </header>
 
-        {/* 2. MAIN CONTENT (TWO COLUMNS: MAP + WEATHER CARD) */}
+        {/* 2. MAIN CONTENT (TWO COLUMNS: MAP + RIGHT COLUMN [LIVE CCTV + WEATHER]) */}
         <section
+          id="main-map-section"
           aria-label="Peta dan Cuaca"
           className="flex flex-col lg:flex-row items-stretch gap-7 sm:gap-8"
         >
@@ -128,15 +139,27 @@ export default function Home() {
           <PastelMap
             cameras={cameras}
             selectedCamera={selectedCamera}
-            onSelectCamera={(cam) => {
-              setSelectedCamera(cam);
-            }}
+            onSelectCamera={handleSelectCamera}
             activeCategory={activeCategory}
             rainChance={60}
           />
 
-          {/* Right Column: Claymorphism Weather Card */}
-          <WeatherCard rainChance={60} />
+          {/* Right Column: Splits into Live CCTV on Top + Weather Card Below */}
+          <div className="flex flex-col gap-6 w-full lg:w-[380px] xl:w-[420px] shrink-0 transition-all duration-300">
+            {/* Top Section: Live CCTV Player (Appears when pin or card clicked) */}
+            {activeLiveCamera && (
+              <ClayLivePlayer
+                camera={activeLiveCamera}
+                onClose={() => setActiveLiveCamera(null)}
+              />
+            )}
+
+            {/* Bottom Section: Weather Card */}
+            <WeatherCard
+              rainChance={60}
+              isSplit={Boolean(activeLiveCamera)}
+            />
+          </div>
         </section>
 
         {/* 3. FILTER + CAMERA CCTV DIRECTORY */}
@@ -160,17 +183,8 @@ export default function Home() {
                 key={cam.id}
                 camera={cam}
                 isSelected={selectedCamera.id === cam.id}
-                onSelect={(c) => {
-                  setSelectedCamera(c);
-                  // Smoothly scroll towards map on mobile
-                  if (window.innerWidth < 1024) {
-                    window.scrollTo({ top: 180, behavior: "smooth" });
-                  }
-                }}
-                onPlayStream={(c) => {
-                  setSelectedCamera(c);
-                  setPlayingCamera(c);
-                }}
+                onSelect={handleSelectCamera}
+                onPlayStream={handleSelectCamera}
               />
             ))}
           </div>
@@ -181,14 +195,6 @@ export default function Home() {
           <p>Contoh desain &bull; data kamera, lokasi, dan cuaca hanya ilustrasi</p>
         </footer>
       </div>
-
-      {/* Live Stream Pop-up Modal Player */}
-      {playingCamera && (
-        <LiveStreamModal
-          camera={playingCamera}
-          onClose={() => setPlayingCamera(null)}
-        />
-      )}
     </div>
   );
 }
