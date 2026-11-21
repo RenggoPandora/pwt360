@@ -214,7 +214,7 @@ export default function Home() {
               </div>
               <div className="text-xs font-bold text-[#2A2950] leading-relaxed space-y-1">
                 <p>
-                  <strong className="text-[#6B5CE7]">Transparansi Data Publik:</strong> Seluruh siaran CCTV dihimpun dari portal publik resmi yang terbuka di internet (seperti ATCS Dishub dan Pemkab Banyumas). PWT360 tidak merekam, memodifikasi, atau mengoperasikan kamera privat.
+                  <strong className="text-[#6B5CE7]">Transparansi Data Publik:</strong> Seluruh siaran CCTV dihimpun dari portal publik resmi yang terbuka di internet. PWT360 tidak merekam, memodifikasi, atau mengoperasikan kamera privat.
                 </p>
                 <p className="text-[#565A85]">
                   Bila Anda menemukan kesalahan nama persimpangan, pergeseran titik pin koordinat, atau kendala siaran kamera, silakan hubungi tim pengelola untuk segera kami perbaiki.

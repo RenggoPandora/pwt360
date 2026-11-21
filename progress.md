@@ -28,7 +28,7 @@
 | Video playback          | Completed   | ClayLivePlayer split column + HLS/YouTube Live  |
 | Camera directory        | Completed   | 4-column cards with pastel illustrations & live badges |
 | Search and filtering    | Completed   | 5 category chips with exact count pills |
-| Weather integration     | Completed   | Dynamic Location Forecast (Prediksi Cuaca) with peak rain timing & road travel advisory |
+| Weather integration     | Completed   | 100% Free Live Weather API (/api/weather) tracking exact pin GPS coordinates (Open-Meteo & wttr.in) |
 | Multi-camera monitoring | Completed   | 2x2 multi-camera grid wall            |
 | Administration          | Completed   | Supabase Auth protected Admin Studio (/admin) with live Supabase database sync |
 | Testing                 | Completed   | Production build passes 0 errors      |

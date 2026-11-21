@@ -1,6 +1,6 @@
 "use client";
 
-import { DynamicWeather, WeatherConditionType } from "@/lib/weather";
+import { DynamicWeather } from "@/lib/weather";
 
 interface WeatherCardProps {
   weather: DynamicWeather;
@@ -104,14 +104,15 @@ export default function WeatherCard({
           isLoading ? "opacity-75" : ""
         }`}
       >
-        {/* Header */}
+        {/* Header with live feed indicator */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
             <h2 className="text-base sm:text-lg font-bold text-[#2A2950] font-heading shrink-0">
               Prediksi Cuaca
             </h2>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E9EDFB] text-[#565A85] truncate max-w-[140px]">
-              {weather.cityName}
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E9EDFB] text-[#6B5CE7] truncate max-w-[140px] flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>{weather.cityName}</span>
             </span>
           </div>
           <span className="text-xs font-bold text-[#6B5CE7] font-heading shrink-0">
@@ -130,13 +131,21 @@ export default function WeatherCard({
                 {weather.conditionText}
               </p>
               <p className="text-[10px] font-bold text-[#565A85]">
-                Rentang suhu: {weather.minExpectedTemp}° - {weather.maxExpectedTemp}°C
+                Prakiraan rentang: {weather.minExpectedTemp}° - {weather.maxExpectedTemp}°C
               </p>
             </div>
           </div>
 
           {renderWeatherIcon("compact")}
         </div>
+
+        {/* Live GPS Coordinates Info */}
+        {weather.lat && weather.lng && (
+          <div className="flex items-center justify-between text-[10px] font-bold text-[#565A85] px-1">
+            <span>Koordinat: {weather.lat.toFixed(4)}, {weather.lng.toFixed(4)}</span>
+            <span className="text-emerald-700">{weather.source || "Sensor Terhubung"}</span>
+          </div>
+        )}
 
         {/* Travel / Road Advisory */}
         <div className="p-2.5 rounded-[16px] bg-white/80 border border-[#E0E5F5] text-[11px] font-bold text-[#2A2950] leading-snug">
@@ -146,7 +155,7 @@ export default function WeatherCard({
         {/* Metrics */}
         <div className="grid grid-cols-3 gap-2">
           <div className="clay-inset bg-[#E9EDFB] rounded-[14px] py-1.5 px-2 flex flex-col items-center justify-center text-center">
-            <span className="text-[10px] font-bold text-[#565A85]">Risiko Hujan</span>
+            <span className="text-[10px] font-bold text-[#565A85]">Peluang Hujan</span>
             <span className="text-xs font-bold text-[#2A2950] font-heading">{weather.rainChance}%</span>
           </div>
 
@@ -162,15 +171,17 @@ export default function WeatherCard({
         </div>
 
         {/* Hourly Forecast Curve */}
-        <div className="pt-1 border-t border-[#E0E5F5]/60 flex items-center justify-between text-center px-1">
-          {weather.hourly.map((item, idx) => (
-            <div key={idx} className="flex flex-col items-center gap-0.5">
-              <span className="text-[9px] font-bold text-[#565A85]">{item.time}</span>
-              <span className="text-[10px] font-bold text-[#2A2950] font-heading">{item.temp}°</span>
-              <span className="text-[9px] font-bold text-[#6B5CE7]">{item.rainChance}%</span>
-            </div>
-          ))}
-        </div>
+        {weather.hourly.length > 0 && (
+          <div className="pt-1 border-t border-[#E0E5F5]/60 flex items-center justify-between text-center px-1">
+            {weather.hourly.map((item, idx) => (
+              <div key={idx} className="flex flex-col items-center gap-0.5">
+                <span className="text-[9px] font-bold text-[#565A85]">{item.time}</span>
+                <span className="text-[10px] font-bold text-[#2A2950] font-heading">{item.temp}°</span>
+                <span className="text-[9px] font-bold text-[#6B5CE7]">{item.rainChance}%</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
@@ -185,11 +196,14 @@ export default function WeatherCard({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-[#2A2950] font-heading">
-            Prediksi Cuaca
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl sm:text-2xl font-bold text-[#2A2950] font-heading">
+              Prediksi Cuaca
+            </h2>
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          </div>
           <span className="text-xs font-bold text-[#565A85]">
-            Prakiraan Lokasi Kamera
+            {weather.source || "Sensor Satelit Live"}
           </span>
         </div>
         <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#E9EDFB] text-[#6B5CE7] max-w-[170px] truncate shadow-xs">
@@ -253,10 +267,18 @@ export default function WeatherCard({
         </div>
       </div>
 
+      {/* Live GPS Coordinates Info */}
+      {weather.lat && weather.lng && (
+        <div className="flex items-center justify-between text-[11px] font-bold text-[#565A85] px-2 py-1.5 rounded-[14px] bg-[#E9EDFB]">
+          <span>GPS Pin: {weather.lat.toFixed(4)}, {weather.lng.toFixed(4)}</span>
+          <span className="text-[#6B5CE7]">Real-time Sync</span>
+        </div>
+      )}
+
       {/* 3 Forecast Metrics */}
       <div className="grid grid-cols-3 gap-2.5">
         <div className="clay-inset bg-[#E9EDFB] rounded-[20px] py-3 px-2 flex flex-col items-center justify-center text-center">
-          <span className="text-[10px] font-bold text-[#565A85] mb-0.5">Puncak Hujan</span>
+          <span className="text-[10px] font-bold text-[#565A85] mb-0.5">Peluang Hujan</span>
           <span className="text-sm font-bold text-[#2A2950] font-heading">
             {weather.rainChance}%
           </span>
@@ -278,46 +300,48 @@ export default function WeatherCard({
       </div>
 
       {/* Hourly Forecast Projection */}
-      <div>
-        <div className="flex items-center justify-between mb-2.5">
-          <h4 className="text-xs font-bold text-[#565A85] font-heading">
-            Prakiraan Tiap Jam (Open-Meteo)
-          </h4>
-          {weather.peakRainTime && (
-            <span className="text-[10px] font-bold text-[#B8185A]">
-              Puncak: {weather.peakRainTime}
-            </span>
-          )}
-        </div>
+      {weather.hourly.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-2.5">
+            <h4 className="text-xs font-bold text-[#565A85] font-heading">
+              Prakiraan Tiap Jam (Live API)
+            </h4>
+            {weather.updatedAt && (
+              <span className="text-[10px] font-bold text-[#6B5CE7]">
+                Update: {weather.updatedAt}
+              </span>
+            )}
+          </div>
 
-        <div className="grid grid-cols-5 gap-2 text-center">
-          {weather.hourly.map((item, idx) => (
-            <div key={idx} className="clay-inset bg-[#E9EDFB] rounded-[16px] py-2 px-1 flex flex-col items-center gap-1">
-              <span className="text-[10px] font-bold text-[#565A85]">{item.time}</span>
-              <div className="w-6 h-6 flex items-center justify-center">
-                {item.conditionType === "sunny" ? (
-                  <svg className="w-5 h-5 text-[#F59E0B]" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="5" fill="#F59E0B" />
-                    <line x1="12" y1="2" x2="12" y2="4" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" />
-                    <line x1="12" y1="20" x2="12" y2="22" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" />
-                  </svg>
-                ) : item.conditionType === "rainy" || item.conditionType === "thunderstorm" ? (
-                  <svg className="w-5 h-5 text-[#4C78DD]" viewBox="0 0 24 24" fill="none">
-                    <path d="M17.5 14a3.5 3.5 0 0 0-2.45-5.95 5.5 5.5 0 0 0-10.1 2.05A4 4 0 0 0 5 18h12.5" fill="#C8D4F5" />
-                    <path d="M8 19v3M12 19v3M16 19v3" stroke="#4C78DD" strokeWidth="2" strokeLinecap="round" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5 text-[#7F91D8]" viewBox="0 0 24 24" fill="none">
-                    <path d="M17.5 15a3.5 3.5 0 0 0-2.45-5.95 5.5 5.5 0 0 0-10.1 2.05A4 4 0 0 0 5 19h12.5" fill="#C8D4F5" />
-                  </svg>
-                )}
+          <div className="grid grid-cols-5 gap-2 text-center">
+            {weather.hourly.map((item, idx) => (
+              <div key={idx} className="clay-inset bg-[#E9EDFB] rounded-[16px] py-2 px-1 flex flex-col items-center gap-1">
+                <span className="text-[10px] font-bold text-[#565A85]">{item.time}</span>
+                <div className="w-6 h-6 flex items-center justify-center">
+                  {item.conditionType === "sunny" ? (
+                    <svg className="w-5 h-5 text-[#F59E0B]" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="5" fill="#F59E0B" />
+                      <line x1="12" y1="2" x2="12" y2="4" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" />
+                      <line x1="12" y1="20" x2="12" y2="22" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  ) : item.conditionType === "rainy" || item.conditionType === "thunderstorm" ? (
+                    <svg className="w-5 h-5 text-[#4C78DD]" viewBox="0 0 24 24" fill="none">
+                      <path d="M17.5 14a3.5 3.5 0 0 0-2.45-5.95 5.5 5.5 0 0 0-10.1 2.05A4 4 0 0 0 5 18h12.5" fill="#C8D4F5" />
+                      <path d="M8 19v3M12 19v3M16 19v3" stroke="#4C78DD" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5 text-[#7F91D8]" viewBox="0 0 24 24" fill="none">
+                      <path d="M17.5 15a3.5 3.5 0 0 0-2.45-5.95 5.5 5.5 0 0 0-10.1 2.05A4 4 0 0 0 5 19h12.5" fill="#C8D4F5" />
+                    </svg>
+                  )}
+                </div>
+                <span className="text-xs font-bold text-[#2A2950] font-heading">{item.temp}°</span>
+                <span className="text-[9px] font-bold text-[#6B5CE7]">{item.rainChance}%</span>
               </div>
-              <span className="text-xs font-bold text-[#2A2950] font-heading">{item.temp}°</span>
-              <span className="text-[9px] font-bold text-[#6B5CE7]">{item.rainChance}%</span>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
