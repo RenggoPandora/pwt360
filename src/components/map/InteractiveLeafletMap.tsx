@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import { DashboardCamera, CameraCategory } from "@/types/camera";
+import { WeatherConditionType } from "@/lib/weather";
 
 interface InteractiveLeafletMapProps {
   cameras: DashboardCamera[];
@@ -10,6 +11,7 @@ interface InteractiveLeafletMapProps {
   onSelectCamera: (camera: DashboardCamera) => void;
   activeCategory: CameraCategory | "all";
   rainChance?: number;
+  conditionType?: WeatherConditionType;
 }
 
 export default function InteractiveLeafletMap({
@@ -18,6 +20,7 @@ export default function InteractiveLeafletMap({
   onSelectCamera,
   activeCategory,
   rainChance = 60,
+  conditionType = "rainy",
 }: InteractiveLeafletMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -181,12 +184,55 @@ export default function InteractiveLeafletMap({
         {/* Leaflet Map Div */}
         <div ref={mapContainerRef} className="w-full h-full z-0" />
 
-        {/* Rain and Clouds Atmospheric Overlay (Decorative, pointer-events-none) */}
-        {isRaining && (
-          <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden opacity-60">
+        {/* Atmospheric Weather Overlay: Sunny, Cloudy, Rainy, Thunderstorm */}
+        {conditionType === "sunny" && (
+          <div className="absolute top-4 right-4 z-10 pointer-events-none overflow-hidden flex items-center justify-center">
+            {/* Ambient Golden Sun Flare & Radiating Rays */}
+            <div className="relative w-44 h-44 flex items-center justify-center">
+              <div
+                className="absolute inset-0 rounded-full animate-sun-pulse"
+                style={{
+                  background:
+                    "radial-gradient(circle, rgba(255, 185, 30, 0.45) 0%, rgba(255, 215, 60, 0.22) 45%, transparent 75%)",
+                }}
+              />
+              <svg
+                className="w-28 h-28 text-[#F59E0B] animate-sun-spin opacity-85"
+                viewBox="0 0 100 100"
+                fill="none"
+              >
+                <circle cx="50" cy="50" r="20" fill="#FFA500" />
+                <circle cx="50" cy="50" r="16" fill="#FFC107" />
+                {/* 12 Sunbeams */}
+                {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((deg) => (
+                  <line
+                    key={deg}
+                    x1="50"
+                    y1="18"
+                    x2="50"
+                    y2="8"
+                    stroke="#F59E0B"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    transform={`rotate(${deg} 50 50)`}
+                  />
+                ))}
+              </svg>
+            </div>
+          </div>
+        )}
+
+        {(conditionType === "cloudy" || conditionType === "rainy" || conditionType === "thunderstorm") && (
+          <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden opacity-65">
             {/* Top Clouds */}
             <svg
-              className="absolute -top-6 left-0 right-0 w-full h-28 animate-cloud text-[#7E92D8]"
+              className={`absolute -top-6 left-0 right-0 w-full h-28 animate-cloud ${
+                conditionType === "thunderstorm"
+                  ? "text-[#5A6D9E]"
+                  : conditionType === "rainy"
+                  ? "text-[#7E92D8]"
+                  : "text-[#9EB1E8]"
+              }`}
               viewBox="0 0 1000 120"
               fill="currentColor"
             >
@@ -195,27 +241,29 @@ export default function InteractiveLeafletMap({
               <path d="M 740 40 Q 800 0 880 10 Q 960 5 1010 40 Q 1040 85 1000 120 Q 940 140 860 130 Q 780 140 730 110 Q 690 75 740 40 Z" />
             </svg>
 
-            {/* Falling Raindrops */}
-            <svg
-              className="w-full h-full animate-rain text-[#587CD4]"
-              viewBox="0 0 1000 700"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-            >
-              {[
-                { x: 120, y: 160 }, { x: 180, y: 220 }, { x: 250, y: 180 },
-                { x: 340, y: 240 }, { x: 420, y: 190 }, { x: 480, y: 260 },
-                { x: 550, y: 210 }, { x: 620, y: 270 }, { x: 710, y: 220 },
-                { x: 790, y: 280 }, { x: 860, y: 200 }, { x: 920, y: 250 },
-                { x: 150, y: 320 }, { x: 220, y: 380 }, { x: 310, y: 350 },
-                { x: 390, y: 400 }, { x: 460, y: 340 }, { x: 540, y: 420 },
-                { x: 630, y: 370 }, { x: 720, y: 430 }, { x: 810, y: 360 },
-                { x: 890, y: 410 }, { x: 170, y: 470 }, { x: 260, y: 520 },
-              ].map((d, i) => (
-                <line key={i} x1={d.x} y1={d.y} x2={d.x - 4} y2={d.y + 14} />
-              ))}
-            </svg>
+            {/* Falling Raindrops (Only if rainy or thunderstorm) */}
+            {(conditionType === "rainy" || conditionType === "thunderstorm") && (
+              <svg
+                className="w-full h-full animate-rain text-[#587CD4]"
+                viewBox="0 0 1000 700"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              >
+                {[
+                  { x: 120, y: 160 }, { x: 180, y: 220 }, { x: 250, y: 180 },
+                  { x: 340, y: 240 }, { x: 420, y: 190 }, { x: 480, y: 260 },
+                  { x: 550, y: 210 }, { x: 620, y: 270 }, { x: 710, y: 220 },
+                  { x: 790, y: 280 }, { x: 860, y: 200 }, { x: 920, y: 250 },
+                  { x: 150, y: 320 }, { x: 220, y: 380 }, { x: 310, y: 350 },
+                  { x: 390, y: 400 }, { x: 460, y: 340 }, { x: 540, y: 420 },
+                  { x: 630, y: 370 }, { x: 720, y: 430 }, { x: 810, y: 360 },
+                  { x: 890, y: 410 }, { x: 170, y: 470 }, { x: 260, y: 520 },
+                ].map((d, i) => (
+                  <line key={i} x1={d.x} y1={d.y} x2={d.x - 4} y2={d.y + 14} />
+                ))}
+              </svg>
+            )}
           </div>
         )}
 

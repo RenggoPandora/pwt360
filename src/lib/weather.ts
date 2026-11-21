@@ -1,12 +1,16 @@
+export type WeatherConditionType = "sunny" | "cloudy" | "rainy" | "thunderstorm";
+
 export interface HourlyForecast {
   time: string;
   temp: string;
   rain: boolean;
+  type?: WeatherConditionType;
 }
 
 export interface DynamicWeather {
   temperature: number;
   conditionText: string;
+  conditionType: WeatherConditionType;
   isRaining: boolean;
   rainChance: number;
   humidity: number;
@@ -15,17 +19,21 @@ export interface DynamicWeather {
   cityName: string;
 }
 
-// Map WMO Weather Codes to Indonesian descriptions and rain boolean
-export function parseWmoCode(code: number): { text: string; isRaining: boolean } {
-  if (code === 0) return { text: "Cerah", isRaining: false };
-  if (code === 1 || code === 2) return { text: "Cerah berawan", isRaining: false };
-  if (code === 3) return { text: "Berawan", isRaining: false };
-  if (code === 45 || code === 48) return { text: "Berkabut", isRaining: false };
-  if (code >= 51 && code <= 55) return { text: "Gerimis berpotensi hujan", isRaining: true };
-  if (code >= 61 && code <= 65) return { text: "Hujan sedang", isRaining: true };
-  if (code >= 80 && code <= 82) return { text: "Mendung, potensi hujan", isRaining: true };
-  if (code >= 95 && code <= 99) return { text: "Hujan disertai petir", isRaining: true };
-  return { text: "Berawan", isRaining: false };
+// Map WMO Weather Codes to Indonesian descriptions, type, and rain boolean
+export function parseWmoCode(code: number): {
+  text: string;
+  type: WeatherConditionType;
+  isRaining: boolean;
+} {
+  if (code === 0) return { text: "Cerah, terik", type: "sunny", isRaining: false };
+  if (code === 1 || code === 2) return { text: "Cerah berawan", type: "sunny", isRaining: false };
+  if (code === 3) return { text: "Berawan tebal", type: "cloudy", isRaining: false };
+  if (code === 45 || code === 48) return { text: "Berkabut", type: "cloudy", isRaining: false };
+  if (code >= 51 && code <= 55) return { text: "Gerimis berpotensi hujan", type: "rainy", isRaining: true };
+  if (code >= 61 && code <= 65) return { text: "Hujan sedang", type: "rainy", isRaining: true };
+  if (code >= 80 && code <= 82) return { text: "Mendung, potensi hujan", type: "rainy", isRaining: true };
+  if (code >= 95 && code <= 99) return { text: "Hujan disertai petir", type: "thunderstorm", isRaining: true };
+  return { text: "Berawan", type: "cloudy", isRaining: false };
 }
 
 const weatherCache = new Map<string, { data: DynamicWeather; timestamp: number }>();
@@ -54,7 +62,19 @@ export async function fetchLivePinWeather(
     const hourly = json.hourly;
 
     const wmo = parseWmoCode(current.weather_code);
-    const rainChance = hourly?.precipitation_probability?.[0] ?? (wmo.isRaining ? 65 : 20);
+    const rainChance = hourly?.precipitation_probability?.[0] ?? (wmo.isRaining ? 65 : 15);
+
+    // Final condition type taking rainChance into account
+    let finalType: WeatherConditionType = wmo.type;
+    if (wmo.type === "thunderstorm") {
+      finalType = "thunderstorm";
+    } else if (rainChance >= 50 || wmo.isRaining) {
+      finalType = "rainy";
+    } else if (current.weather_code === 0 || current.weather_code === 1 || current.weather_code === 2) {
+      finalType = "sunny";
+    } else {
+      finalType = "cloudy";
+    }
 
     const formattedHourly: HourlyForecast[] = [];
     if (hourly && hourly.time) {
@@ -64,11 +84,16 @@ export async function fetchLivePinWeather(
         const tempVal = Math.round(hourly.temperature_2m[i] ?? 27);
         const codeVal = hourly.weather_code[i] ?? 0;
         const hourWmo = parseWmoCode(codeVal);
+        const hourRainChance = hourly.precipitation_probability?.[i] ?? 0;
+
+        let hourType: WeatherConditionType = hourWmo.type;
+        if (hourRainChance >= 50) hourType = "rainy";
 
         formattedHourly.push({
           time: hourStr,
           temp: `${tempVal}°`,
-          rain: hourWmo.isRaining || (hourly.precipitation_probability?.[i] ?? 0) >= 40,
+          rain: hourType === "rainy" || hourType === "thunderstorm",
+          type: hourType,
         });
       }
     }
@@ -76,7 +101,8 @@ export async function fetchLivePinWeather(
     const result: DynamicWeather = {
       temperature: Math.round(current.temperature_2m),
       conditionText: wmo.text,
-      isRaining: wmo.isRaining || rainChance >= 50,
+      conditionType: finalType,
+      isRaining: finalType === "rainy" || finalType === "thunderstorm",
       rainChance: rainChance,
       humidity: Math.round(current.relative_humidity_2m),
       windSpeed: Math.round(current.wind_speed_10m),
@@ -89,18 +115,19 @@ export async function fetchLivePinWeather(
   } catch (err) {
     console.warn("Open-Meteo live weather fetch failed, using fallback:", err);
     return {
-      temperature: 27,
-      conditionText: "Mendung, potensi hujan",
-      isRaining: true,
-      rainChance: 60,
-      humidity: 78,
-      windSpeed: 9,
+      temperature: 28,
+      conditionText: "Cerah, terik",
+      conditionType: "sunny",
+      isRaining: false,
+      rainChance: 20,
+      humidity: 72,
+      windSpeed: 8,
       hourly: [
-        { time: "12.00", temp: "28°", rain: false },
-        { time: "13.00", temp: "28°", rain: false },
-        { time: "14.00", temp: "27°", rain: true },
-        { time: "15.00", temp: "26°", rain: true },
-        { time: "16.00", temp: "26°", rain: true },
+        { time: "12.00", temp: "29°", rain: false, type: "sunny" },
+        { time: "13.00", temp: "29°", rain: false, type: "sunny" },
+        { time: "14.00", temp: "28°", rain: false, type: "cloudy" },
+        { time: "15.00", temp: "27°", rain: true, type: "rainy" },
+        { time: "16.00", temp: "26°", rain: true, type: "rainy" },
       ],
       cityName: locationName,
     };

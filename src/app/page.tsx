@@ -13,6 +13,7 @@ import { fetchLivePinWeather, DynamicWeather } from "@/lib/weather";
 const DEFAULT_WEATHER: DynamicWeather = {
   temperature: 27,
   conditionText: "Mendung, potensi hujan",
+  conditionType: "rainy",
   isRaining: true,
   rainChance: 60,
   humidity: 78,
@@ -176,13 +177,14 @@ export default function Home() {
           aria-label="Peta dan Cuaca"
           className="flex flex-col lg:flex-row items-start gap-7 sm:gap-8"
         >
-          {/* Left Column: Pastel Map with Real Live Rain overlay */}
+          {/* Left Column: Pastel Map with Real Dynamic Weather overlay */}
           <PastelMap
             cameras={cameras}
             selectedCamera={selectedCamera}
             onSelectCamera={handleSelectCamera}
             activeCategory={activeCategory}
             rainChance={weather.rainChance}
+            conditionType={weather.conditionType}
           />
 
           {/* Right Column: Splits into Live CCTV on Top + Weather Card Below */}

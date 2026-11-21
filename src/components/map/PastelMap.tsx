@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { DashboardCamera, CameraCategory } from "@/types/camera";
+import { WeatherConditionType } from "@/lib/weather";
 
 interface PastelMapProps {
   cameras: DashboardCamera[];
@@ -9,6 +10,7 @@ interface PastelMapProps {
   onSelectCamera: (camera: DashboardCamera) => void;
   activeCategory: CameraCategory | "all";
   rainChance?: number;
+  conditionType?: WeatherConditionType;
 }
 
 const InteractiveLeafletMap = dynamic(
