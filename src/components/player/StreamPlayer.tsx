@@ -50,7 +50,8 @@ export default function StreamPlayer({ camera, onReport }: StreamPlayerProps) {
         hls = new Hls({
           enableWorker: true,
           lowLatencyMode: true,
-          backBufferLength: 60,
+          maxBufferLength: 8,
+          backBufferLength: 0,
         });
 
         hls.loadSource(camera.streamUrl);
@@ -58,12 +59,8 @@ export default function StreamPlayer({ camera, onReport }: StreamPlayerProps) {
 
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           setIsLoading(false);
-          video.play().catch(() => {
-            // Autoplay policy: needs muted
-            video.muted = true;
-            setIsMuted(true);
-            video.play().catch(() => {});
-          });
+          video.muted = true;
+          video.play().catch(() => {});
         });
 
         hls.on(Hls.Events.ERROR, (_event, data) => {
@@ -134,33 +131,45 @@ export default function StreamPlayer({ camera, onReport }: StreamPlayerProps) {
       <div className="relative aspect-video w-full bg-slate-950 flex items-center justify-center overflow-hidden">
         {camera.streamType === "youtube" && camera.youtubeVideoId ? (
           <iframe
-            src={`https://www.youtube-nocookie.com/embed/${camera.youtubeVideoId}?autoplay=1&mute=1&playsinline=1&modestbranding=1`}
+            src={`https://www.youtube.com/embed/${camera.youtubeVideoId}?autoplay=1&mute=1&playsinline=1&modestbranding=1&rel=0`}
             title={camera.name}
             className="w-full h-full border-0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
           />
-        ) : hasError || camera.status === "standby" ? (
+        ) : hasError ? (
           <div className="flex flex-col items-center justify-center p-6 text-center text-slate-300">
             <div className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mb-3 text-amber-400">
               <AlertCircle className="w-7 h-7" />
             </div>
             <h4 className="text-base font-semibold text-white mb-1">
-              {camera.status === "standby" ? "Stream dalam Antrean / Standby" : "Feed Saat Ini Tidak Menjawab"}
+              Feed Sementara Tidak Merespons
             </h4>
             <p className="text-xs text-slate-400 max-w-sm mb-4">
-              {camera.status === "standby"
-                ? "Server sumber sedang menghemat bandwidth atau berada di luar jam operasional siaran."
-                : "Koneksi stream publik mengalami hambatan jaringan dari server penyedia."}
+              Koneksi publik server sumber sedang padat atau offline. Klik coba lagi untuk memuat ulang segmen live stream.
             </p>
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setHasError(false);
+                  setIsLoading(true);
+                  if (videoRef.current && camera.streamUrl) {
+                    videoRef.current.load();
+                  }
+                }}
+                className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-medium text-white inline-flex items-center gap-1.5 transition"
+              >
+                <RefreshCw className="w-3.5 h-3.5" /> Coba Lagi
+              </button>
               <a
                 href={camera.sourceUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 inline-flex items-center gap-1.5 transition"
               >
-                Kunjungi Sumber Asli <ExternalLink className="w-3.5 h-3.5" />
+                Sumber Asli <ExternalLink className="w-3.5 h-3.5" />
               </a>
               {onReport && (
                 <button

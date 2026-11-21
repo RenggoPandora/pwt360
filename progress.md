@@ -21,8 +21,8 @@
 | Technical architecture  | Completed   | Next.js App Router, Hybrid Ingestion  |
 | Project initialization  | Completed   | Next.js 16 latest stable, TS, Tailwind |
 | Database design         | In progress | TypeScript models & seed established  |
-| CCTV source research    | Completed   | 32 ATCS cameras + OSINT feeds mapped  |
-| CCTV discovery          | In progress | Automated ATCS parser + OSINT staging |
+| CCTV source research    | Completed   | 30 strictly verified active feeds (ATCS + YouTube) |
+| CCTV discovery          | Completed   | OSINT scanner + ATCS active stream recon |
 | CCTV validation         | Completed   | HLS & YouTube live stream validator   |
 | Interactive map         | Completed   | Leaflet OpenStreetMap with pulse pins |
 | Video playback          | Completed   | StreamPlayer (HLS.js + YouTube Live)  |
