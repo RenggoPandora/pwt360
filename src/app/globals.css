@@ -152,3 +152,14 @@ h1, h2, h3, h4, .font-heading {
     animation: none !important;
   }
 }
+
+/* Soft pastel theme for standard OpenStreetMap tiles */
+.leaflet-tile-pane {
+  filter: brightness(1.03) contrast(0.92) saturate(0.82) hue-rotate(-5deg);
+}
+
+.leaflet-container {
+  font-family: inherit;
+  background-color: #ccd8f4;
+}
+

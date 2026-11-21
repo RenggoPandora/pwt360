@@ -46,16 +46,12 @@ export default function InteractiveLeafletMap({
     // Custom positioned zoom control (top-right so it doesn't overlap bottom legends)
     L.control.zoom({ position: "topright" }).addTo(map);
 
-    // CartoDB Voyager pastel tiles (clean, soft, modern, matching claymorphism)
-    L.tileLayer(
-      "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-      {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
-        subdomains: "abcd",
-        maxZoom: 19,
-      }
-    ).addTo(map);
+    // 100% Free OpenStreetMap tiles (No API key required)
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19,
+    }).addTo(map);
 
     mapInstanceRef.current = map;
 
