@@ -36,13 +36,13 @@ export default function InteractiveLeafletMap({
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
 
-    // Center of Purwokerto
-    const center: [number, number] = [-7.426, 109.238];
+    // Center of Purwokerto encompassing downtown and eastern corridor
+    const center: [number, number] = [-7.432, 109.252];
     const map = L.map(mapContainerRef.current, {
       center: center,
-      zoom: 14,
+      zoom: 13,
       zoomControl: false,
-      minZoom: 12,
+      minZoom: 11,
       maxZoom: 18,
     });
 

@@ -49,7 +49,8 @@ export default function Home() {
     fetchLivePinWeather(
       selectedCamera.lat,
       selectedCamera.lng,
-      selectedCamera.name
+      selectedCamera.name,
+      selectedCamera.category
     ).then((data) => {
       if (!isCancelled) {
         setWeather(data);
@@ -60,7 +61,12 @@ export default function Home() {
     return () => {
       isCancelled = true;
     };
-  }, [selectedCamera.lat, selectedCamera.lng, selectedCamera.name]);
+  }, [
+    selectedCamera.lat,
+    selectedCamera.lng,
+    selectedCamera.name,
+    selectedCamera.category,
+  ]);
 
   // Category counts
   const counts = useMemo(() => {

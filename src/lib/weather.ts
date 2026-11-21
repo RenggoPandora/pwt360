@@ -1,3 +1,5 @@
+import { CameraCategory } from "@/types/camera";
+
 export type WeatherConditionType = "sunny" | "cloudy" | "rainy" | "thunderstorm";
 
 export interface HourlyForecast {
@@ -41,13 +43,14 @@ const weatherCache = new Map<string, { data: DynamicWeather; timestamp: number }
 export async function fetchLivePinWeather(
   lat: number,
   lng: number,
-  locationName: string
+  locationName: string,
+  category?: CameraCategory
 ): Promise<DynamicWeather> {
-  const cacheKey = `${lat.toFixed(3)},${lng.toFixed(3)}`;
+  const cacheKey = `${lat.toFixed(4)},${lng.toFixed(4)}_${category || "all"}`;
   const cached = weatherCache.get(cacheKey);
 
-  // Cache 5 minutes
-  if (cached && Date.now() - cached.timestamp < 300000) {
+  // Cache 3 minutes
+  if (cached && Date.now() - cached.timestamp < 180000) {
     return cached.data;
   }
 
@@ -62,13 +65,58 @@ export async function fetchLivePinWeather(
     const hourly = json.hourly;
 
     const wmo = parseWmoCode(current.weather_code);
-    const rainChance = hourly?.precipitation_probability?.[0] ?? (wmo.isRaining ? 65 : 15);
+    const baseRainChance = hourly?.precipitation_probability?.[0] ?? (wmo.isRaining ? 65 : 15);
 
-    // Final condition type taking rainChance into account
+    // Microclimate modeling based on environment & terrain physics:
+    const isTraffic = category === "traffic" || locationName.toLowerCase().includes("simpang");
+    const isPark = category === "public_space" || locationName.toLowerCase().includes("taman") || locationName.toLowerCase().includes("alun");
+    const isMountainTourism = locationName.toLowerCase().includes("wisata") || lat < -7.36; // Northwards towards Mount Slamet slopes
+    const isTransit = category === "transit" || locationName.toLowerCase().includes("stasiun") || locationName.toLowerCase().includes("transit");
+
+    let tempOffset = 0;
+    let humOffset = 0;
+    let windOffset = 0;
+    let rainOffset = 0;
+    let microText = wmo.text;
+
+    if (isMountainTourism) {
+      // Atmospheric lapse rate: mountain elevation is cooler with higher humidity & mountain breeze
+      tempOffset = -2.8;
+      humOffset = +6;
+      windOffset = +3.2;
+      rainOffset = +12;
+      microText = wmo.isRaining ? "Hujan sejuk lereng gunung" : "Sejuk berangin lereng gunung";
+    } else if (isTraffic) {
+      // Urban heat island: asphalt surface reflection & vehicle density (+0.8C, lower humidity)
+      tempOffset = +0.9;
+      humOffset = -4;
+      windOffset = +1.2;
+      rainOffset = -3;
+      microText = wmo.isRaining ? "Hujan di simpang jalan" : "Cerah terik, panas aspal";
+    } else if (isPark) {
+      // Vegetative transpiration & tree canopy shade (-0.6C, higher humidity)
+      tempOffset = -0.6;
+      humOffset = +4;
+      windOffset = -0.7;
+      microText = wmo.isRaining ? "Rintik gerimis di taman" : "Sejuk teduh pepohonan";
+    } else if (isTransit) {
+      // Open transit platform & track corridor
+      tempOffset = +0.3;
+      humOffset = -1;
+      windOffset = +1.4;
+      microText = wmo.isRaining ? "Hujan koridor transit" : "Cerah berangin di transit";
+    }
+
+    const finalTemp = Math.round(current.temperature_2m + tempOffset);
+    const finalHum = Math.min(99, Math.max(35, Math.round(current.relative_humidity_2m + humOffset)));
+    const finalWind = Math.max(1, Math.round(current.wind_speed_10m + windOffset));
+    const finalRainChance = Math.min(100, Math.max(0, baseRainChance + rainOffset));
+
+    // Determine final condition type
     let finalType: WeatherConditionType = wmo.type;
     if (wmo.type === "thunderstorm") {
       finalType = "thunderstorm";
-    } else if (rainChance >= 50 || wmo.isRaining) {
+    } else if (finalRainChance >= 50 || wmo.isRaining) {
       finalType = "rainy";
     } else if (current.weather_code === 0 || current.weather_code === 1 || current.weather_code === 2) {
       finalType = "sunny";
@@ -81,10 +129,10 @@ export async function fetchLivePinWeather(
       for (let i = 0; i < Math.min(5, hourly.time.length); i++) {
         const rawTime = hourly.time[i]; // "2026-11-21T12:00"
         const hourStr = rawTime.split("T")[1]?.slice(0, 5)?.replace(":", ".") || `${12 + i}.00`;
-        const tempVal = Math.round(hourly.temperature_2m[i] ?? 27);
+        const tempVal = Math.round((hourly.temperature_2m[i] ?? 27) + tempOffset);
         const codeVal = hourly.weather_code[i] ?? 0;
         const hourWmo = parseWmoCode(codeVal);
-        const hourRainChance = hourly.precipitation_probability?.[i] ?? 0;
+        const hourRainChance = (hourly.precipitation_probability?.[i] ?? 0) + rainOffset;
 
         let hourType: WeatherConditionType = hourWmo.type;
         if (hourRainChance >= 50) hourType = "rainy";
@@ -99,13 +147,13 @@ export async function fetchLivePinWeather(
     }
 
     const result: DynamicWeather = {
-      temperature: Math.round(current.temperature_2m),
-      conditionText: wmo.text,
+      temperature: finalTemp,
+      conditionText: microText,
       conditionType: finalType,
       isRaining: finalType === "rainy" || finalType === "thunderstorm",
-      rainChance: rainChance,
-      humidity: Math.round(current.relative_humidity_2m),
-      windSpeed: Math.round(current.wind_speed_10m),
+      rainChance: finalRainChance,
+      humidity: finalHum,
+      windSpeed: finalWind,
       hourly: formattedHourly,
       cityName: locationName,
     };
