@@ -4,38 +4,32 @@ export type CameraCategory =
   | "tourism"
   | "transit";
 
-export type StreamStatus = "online" | "standby" | "offline" | "staging_review";
+export type TrafficCondition = "Lancar" | "Padat" | "Ramai" | "Tenang";
 
-export type StreamType = "hls" | "youtube" | "iframe" | "mjpeg";
-
-export interface Camera {
+export interface DashboardCamera {
   id: string;
-  slug: string;
+  number: string; // "01", "02", etc.
   name: string;
-  description?: string;
-  locationName: string;
-  subdistrict?: string;
   category: CameraCategory;
+  categoryLabel: string;
+  condition: TrafficCondition;
+  conditionColor: string;
+  time: string; // "11.26"
+  mapX: number; // percentage 0-100%
+  mapY: number; // percentage 0-100%
   lat: number;
   lng: number;
   streamUrl: string;
-  streamType: StreamType;
+  streamType: "hls" | "youtube";
   youtubeVideoId?: string;
-  sourceName: string;
-  sourceUrl: string;
-  isOfficial: boolean;
-  tier: 1 | 2; // Tier 1: Official (Auto), Tier 2: OSINT / Community (Staging Review)
-  status: StreamStatus;
-  lastChecked?: string;
-  reportedCount?: number;
-  featured?: boolean;
+  sourceName?: string;
+  sourceUrl?: string;
+  thumbnailSvgType: "traffic" | "park" | "landmark" | "transit";
+  description?: string;
+  locationName?: string;
+  subdistrict?: string;
+  status?: string;
+  isOfficial?: boolean;
 }
 
-export interface CityWeather {
-  temperature: number;
-  condition: string;
-  humidity: number;
-  windSpeed: number;
-  cityName: string;
-  updatedAt: string;
-}
+export type Camera = DashboardCamera;

@@ -17,18 +17,18 @@
 | Area                    | Status      | Notes                                 |
 | ----------------------- | ----------- | ------------------------------------- |
 | Product definition      | Completed   | Initial product brief established     |
-| Visual direction        | Completed   | Modern Claymorphism + Soft-Tech       |
-| Technical architecture  | Completed   | Next.js App Router, Hybrid Ingestion  |
+| Visual direction        | Completed   | Claymorphism per DesignBrief.md (#E9EDFB, Fredoka, Nunito) |
+| Technical architecture  | Completed   | Next.js 16 App Router, Tailwind 4, HLS.js |
 | Project initialization  | Completed   | Next.js 16 latest stable, TS, Tailwind |
-| Database design         | In progress | TypeScript models & seed established  |
+| Database design         | Completed   | Clean 4-category model (Lancar/Padat/Ramai/Tenang) |
 | CCTV source research    | Completed   | 30 strictly verified active feeds (ATCS + YouTube) |
 | CCTV discovery          | Completed   | OSINT scanner + ATCS active stream recon |
 | CCTV validation         | Completed   | HLS & YouTube live stream validator   |
-| Interactive map         | Completed   | Leaflet OpenStreetMap with pulse pins |
-| Video playback          | Completed   | StreamPlayer (HLS.js + YouTube Live)  |
-| Camera directory        | Completed   | Synchronized cards with live badges   |
-| Search and filtering    | Completed   | Real-time search & category filters   |
-| Weather integration     | Completed   | Purwokerto weather & WIB time widget  |
+| Interactive map         | Completed   | Pastel SVG map with floating clouds, rain, & 01-08 pins |
+| Video playback          | Completed   | LiveStreamModal (HLS.js + YouTube Live)  |
+| Camera directory        | Completed   | 4-column cards with pastel illustrations & live badges |
+| Search and filtering    | Completed   | 5 category chips with exact count pills |
+| Weather integration     | Completed   | Claymorphic Weather Card with rain animation & hourly forecast |
 | Multi-camera monitoring | Completed   | 2x2 multi-camera grid wall            |
 | Administration          | Completed   | 1-Click OSINT staging review queue    |
 | Testing                 | Completed   | Production build passes 0 errors      |

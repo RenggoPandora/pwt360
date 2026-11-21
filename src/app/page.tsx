@@ -1,364 +1,192 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Navbar from "@/components/Navbar";
-import WeatherWidget from "@/components/WeatherWidget";
-import StreamPlayer from "@/components/player/StreamPlayer";
-import MapWrapper from "@/components/map/MapWrapper";
-import MultiCameraGrid from "@/components/player/MultiCameraGrid";
-import StagingReviewQueue from "@/components/admin/StagingReviewQueue";
-import ReportModal from "@/components/ReportModal";
-import { INITIAL_CAMERAS } from "@/data/cameras";
-import { Camera, CameraCategory } from "@/types/camera";
-import {
-  Search,
-  SlidersHorizontal,
-  MapPin,
-  ShieldCheck,
-  Sparkles,
-  Radio,
-  ExternalLink,
-  ChevronRight,
-  Filter,
-} from "lucide-react";
+import WeatherCard from "@/components/WeatherCard";
+import PastelMap from "@/components/map/PastelMap";
+import FilterBar from "@/components/FilterBar";
+import CameraCard from "@/components/CameraCard";
+import LiveStreamModal from "@/components/player/LiveStreamModal";
+import { DASHBOARD_CAMERAS } from "@/data/cameras";
+import { DashboardCamera, CameraCategory } from "@/types/camera";
 
 export default function Home() {
-  const [cameras, setCameras] = useState<Camera[]>(INITIAL_CAMERAS);
-  const [selectedCamera, setSelectedCamera] = useState<Camera>(INITIAL_CAMERAS[0]);
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [selectedCategory, setSelectedCategory] = useState<CameraCategory | "all">("all");
-  const [onlyOnline, setOnlyOnline] = useState<boolean>(false);
-  const [isMultiView, setIsMultiView] = useState<boolean>(false);
-  const [multiViewCameras, setMultiViewCameras] = useState<Camera[]>(INITIAL_CAMERAS.slice(0, 4));
-  const [activeTab, setActiveTab] = useState<"explore" | "staging">("explore");
-  const [reportingCamera, setReportingCamera] = useState<Camera | null>(null);
+  const [cameras] = useState<DashboardCamera[]>(DASHBOARD_CAMERAS);
+  const [selectedCamera, setSelectedCamera] = useState<DashboardCamera>(
+    DASHBOARD_CAMERAS[0]
+  );
+  const [activeCategory, setActiveCategory] = useState<CameraCategory | "all">(
+    "all"
+  );
+  const [playingCamera, setPlayingCamera] = useState<DashboardCamera | null>(
+    null
+  );
 
-  // Staging items (simulate OSINT items in review)
-  const [stagingCameras, setStagingCameras] = useState<Camera[]>([
-    {
-      id: "osint-staging-01",
-      slug: "simpang-morodadi-recon",
-      name: "Simpang Morodadi / Jl. Gerilya",
-      description: "Terdeteksi via open RTSP/HLS endpoint geofence Purwokerto Selatan.",
-      locationName: "Jl. Gerilya",
-      subdistrict: "Purwokerto Selatan",
-      category: "traffic",
-      lat: -7.4338,
-      lng: 109.2512,
-      streamUrl: "https://cctv.dev.banyumaskab.go.id/cctv_morodadi/index.m3u8",
-      streamType: "hls",
-      sourceName: "OSINT Network Scanner",
-      sourceUrl: "https://pwt360.id",
-      isOfficial: false,
-      tier: 2,
-      status: "staging_review",
-    },
-    {
-      id: "osint-staging-02",
-      slug: "stasiun-timur-live",
-      name: "Area Parkir Timur Stasiun Purwokerto",
-      description: "Live feed publik kiriman komunitas warga sekitar stasiun.",
-      locationName: "Stasiun Purwokerto",
-      subdistrict: "Purwokerto Barat",
-      category: "transit",
-      lat: -7.4191,
-      lng: 109.2223,
-      streamUrl: "https://www.youtube.com/watch?v=sample_stasiun",
-      streamType: "youtube",
-      youtubeVideoId: "5qap5aO4i9A",
-      sourceName: "Warga / Community Submission",
-      sourceUrl: "https://youtube.com",
-      isOfficial: false,
-      tier: 2,
-      status: "staging_review",
-    },
-  ]);
-
-  // Filtering
-  const filteredCameras = useMemo(() => {
-    return cameras.filter((cam) => {
-      // Exclude staging items from normal explore
-      if (cam.status === "staging_review") return false;
-
-      const matchesSearch =
-        cam.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        cam.locationName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (cam.subdistrict && cam.subdistrict.toLowerCase().includes(searchQuery.toLowerCase()));
-
-      const matchesCategory = selectedCategory === "all" || cam.category === selectedCategory;
-      const matchesOnline = !onlyOnline || cam.status === "online";
-
-      return matchesSearch && matchesCategory && matchesOnline;
-    });
-  }, [cameras, searchQuery, selectedCategory, onlyOnline]);
-
-  const onlineCount = useMemo(() => {
-    return cameras.filter((c) => c.status === "online").length;
+  // Category counts
+  const counts = useMemo(() => {
+    return {
+      all: cameras.length,
+      traffic: cameras.filter((c) => c.category === "traffic").length,
+      public_space: cameras.filter((c) => c.category === "public_space").length,
+      tourism: cameras.filter((c) => c.category === "tourism").length,
+      transit: cameras.filter((c) => c.category === "transit").length,
+    };
   }, [cameras]);
 
-  // Staging actions
-  const handleApproveStaging = (cam: Camera) => {
-    setStagingCameras((prev) => prev.filter((c) => c.id !== cam.id));
-    const approvedCam: Camera = { ...cam, status: "online" };
-    setCameras((prev) => [approvedCam, ...prev]);
-    setSelectedCamera(approvedCam);
-    setActiveTab("explore");
-  };
-
-  const handleRejectStaging = (cam: Camera) => {
-    setStagingCameras((prev) => prev.filter((c) => c.id !== cam.id));
-  };
+  // Filtered cameras for the grid
+  const filteredCameras = useMemo(() => {
+    if (activeCategory === "all") return cameras;
+    return cameras.filter((c) => c.category === activeCategory);
+  }, [cameras, activeCategory]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F4F6FB] text-slate-800">
-      <Navbar
-        totalCount={cameras.length}
-        onlineCount={onlineCount}
-        isMultiView={isMultiView}
-        onToggleMultiView={() => setIsMultiView((prev) => !prev)}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        stagingCount={stagingCameras.length}
-      />
+    <div className="min-h-screen bg-[#E9EDFB] text-[#2A2950] selection:bg-[#6B5CE7] selection:text-white pb-14">
+      {/* Container with max-width 1440px and responsive padding */}
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-10 pt-7 sm:pt-9 space-y-9 sm:space-y-11">
+        {/* 1. HERO SECTION */}
+        <header className="space-y-6">
+          {/* Top Bar: Brand & Live Pills */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {/* Brand Logo & Tagline */}
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-[18px] bg-[#6B5CE7] flex items-center justify-center text-white shadow-md shadow-[#6B5CE7]/30 shrink-0">
+                <svg
+                  className="w-7 h-7"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="2" y1="12" x2="22" y2="12" />
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
+              </div>
+              <div>
+                <span className="text-2xl font-bold font-heading text-[#2A2950] tracking-tight block leading-tight">
+                  PWT360
+                </span>
+                <span className="text-xs font-bold text-[#565A85]">
+                  CCTV publik, peta &amp; cuaca dalam satu layar
+                </span>
+              </div>
+            </div>
 
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
-        {/* Weather & Time Context Bar */}
-        <WeatherWidget />
+            {/* Top Right Pills */}
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* LIVE Camera Counter Pill */}
+              <div className="clay-pill px-4 sm:px-5 py-2.5 flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#C62A5B] animate-pulse shrink-0" />
+                <span className="text-xs sm:text-sm font-bold font-heading text-[#2A2950]">
+                  LIVE &bull; {cameras.length} kamera
+                </span>
+              </div>
 
-        {activeTab === "staging" ? (
-          <StagingReviewQueue
-            stagingCameras={stagingCameras}
-            onApprove={handleApproveStaging}
-            onReject={handleRejectStaging}
+              {/* Date & Time Pill */}
+              <div className="clay-pill px-4 sm:px-5 py-2.5 flex items-center gap-2">
+                <svg
+                  className="w-4 h-4 text-[#565A85] shrink-0"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+                <span className="text-xs sm:text-sm font-bold font-heading text-[#2A2950]">
+                  Sabtu, 21 Nov 2026 &bull; 11.26 WIB
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Hero H1 & Intro Sentence */}
+          <div className="space-y-2 max-w-3xl">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-heading text-[#2A2950] tracking-tight">
+              Pantau kota, langsung dari layar.
+            </h1>
+            <p className="text-sm sm:text-base font-bold text-[#565A85] leading-relaxed">
+              Lihat posisi kamera di peta, cek cuaca sekitar, lalu pilih kategori untuk membuka siaran langsungnya.
+            </p>
+          </div>
+        </header>
+
+        {/* 2. MAIN CONTENT (TWO COLUMNS: MAP + WEATHER CARD) */}
+        <section
+          aria-label="Peta dan Cuaca"
+          className="flex flex-col lg:flex-row items-stretch gap-7 sm:gap-8"
+        >
+          {/* Left Column: Pastel Map */}
+          <PastelMap
+            cameras={cameras}
+            selectedCamera={selectedCamera}
+            onSelectCamera={(cam) => {
+              setSelectedCamera(cam);
+            }}
+            activeCategory={activeCategory}
+            rainChance={60}
           />
-        ) : (
-          <>
-            {/* Multi-view Grid Wall (Conditional) */}
-            {isMultiView && (
-              <MultiCameraGrid
-                activeCameras={multiViewCameras}
-                availableCameras={cameras}
-                onRemoveCamera={(id) =>
-                  setMultiViewCameras((prev) => prev.filter((c) => c.id !== id))
-                }
-                onAddCamera={(c) => setMultiViewCameras((prev) => [...prev, c])}
-                onClose={() => setIsMultiView(false)}
+
+          {/* Right Column: Claymorphism Weather Card */}
+          <WeatherCard rainChance={60} />
+        </section>
+
+        {/* 3. FILTER + CAMERA CCTV DIRECTORY */}
+        <section aria-label="Daftar Kamera CCTV" className="space-y-6 pt-2">
+          {/* Section Heading */}
+          <h2 className="text-2xl sm:text-3xl font-bold font-heading text-[#2A2950]">
+            Kamera CCTV
+          </h2>
+
+          {/* Filter Bar Chips */}
+          <FilterBar
+            activeCategory={activeCategory}
+            onSelectCategory={setActiveCategory}
+            counts={counts}
+          />
+
+          {/* Camera Grid (4 columns desktop, 2 columns mobile) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-7">
+            {filteredCameras.map((cam) => (
+              <CameraCard
+                key={cam.id}
+                camera={cam}
+                isSelected={selectedCamera.id === cam.id}
+                onSelect={(c) => {
+                  setSelectedCamera(c);
+                  // Smoothly scroll towards map on mobile
+                  if (window.innerWidth < 1024) {
+                    window.scrollTo({ top: 180, behavior: "smooth" });
+                  }
+                }}
+                onPlayStream={(c) => {
+                  setSelectedCamera(c);
+                  setPlayingCamera(c);
+                }}
               />
-            )}
-
-            {/* Main Primary View: Video Player + Interactive Map */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              {/* Left Column: Player & Active Camera Card */}
-              <div className="lg:col-span-7 space-y-4">
-                <StreamPlayer
-                  camera={selectedCamera}
-                  onReport={(cam) => setReportingCamera(cam)}
-                />
-              </div>
-
-              {/* Right Column: Interactive Map */}
-              <div className="lg:col-span-5 h-[420px] lg:h-[480px]">
-                <MapWrapper
-                  cameras={filteredCameras}
-                  selectedCamera={selectedCamera}
-                  onSelectCamera={(cam) => setSelectedCamera(cam)}
-                />
-              </div>
-            </div>
-
-            {/* Search, Filter, and Directory Section */}
-            <div className="space-y-4 pt-2">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                {/* Search Bar */}
-                <div className="relative flex-1 max-w-md">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Cari simpang, jalan, atau kawasan Purwokerto..."
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200/90 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-blue-500 shadow-xs"
-                  />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchQuery("")}
-                      className="text-xs text-slate-400 hover:text-slate-700 absolute right-3.5 top-1/2 -translate-y-1/2"
-                    >
-                      Batal
-                    </button>
-                  )}
-                </div>
-
-                {/* Filter Pills */}
-                <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-                  <button
-                    type="button"
-                    onClick={() => setOnlyOnline((prev) => !prev)}
-                    className={`px-3 py-2 rounded-xl text-xs font-semibold shrink-0 transition flex items-center gap-1.5 border ${
-                      onlyOnline
-                        ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
-                        : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                    }`}
-                  >
-                    <span
-                      className={`w-2 h-2 rounded-full ${
-                        onlyOnline ? "bg-white" : "bg-emerald-500"
-                      }`}
-                    />
-                    <span>Hanya Online</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Category selector */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-2 text-xs">
-                {[
-                  { id: "all", label: "Semua Kategori" },
-                  { id: "traffic", label: "Lalu Lintas & Simpang" },
-                  { id: "public_space", label: "Ruang Publik & Taman" },
-                  { id: "tourism", label: "Wisata & Landmark" },
-                  { id: "transit", label: "Stasiun & Transit" },
-                ].map((cat) => (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => setSelectedCategory(cat.id as any)}
-                    className={`px-3.5 py-1.5 rounded-full font-medium whitespace-nowrap transition ${
-                      selectedCategory === cat.id
-                        ? "bg-blue-600 text-white shadow-xs"
-                        : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
-                    }`}
-                  >
-                    {cat.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Camera Grid Directory */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filteredCameras.map((cam) => {
-                  const isSelected = selectedCamera.id === cam.id;
-                  const isOnline = cam.status === "online";
-
-                  return (
-                    <div
-                      key={cam.id}
-                      onClick={() => {
-                        setSelectedCamera(cam);
-                        window.scrollTo({ top: 120, behavior: "smooth" });
-                      }}
-                      className={`clay-card p-4 cursor-pointer flex flex-col justify-between border-2 transition ${
-                        isSelected
-                          ? "border-blue-600 shadow-md ring-2 ring-blue-100"
-                          : "border-transparent hover:border-slate-200"
-                      }`}
-                    >
-                      <div>
-                        {/* Top Badges */}
-                        <div className="flex items-center justify-between gap-2 mb-2">
-                          <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                              isOnline
-                                ? "bg-emerald-100 text-emerald-800"
-                                : "bg-amber-100 text-amber-800"
-                            }`}
-                          >
-                            <span
-                              className={`w-1.5 h-1.5 rounded-full ${
-                                isOnline ? "bg-emerald-500 animate-pulse" : "bg-amber-500"
-                              }`}
-                            />
-                            {isOnline ? "Live" : "Standby"}
-                          </span>
-
-                          {cam.isOfficial ? (
-                            <span className="text-[11px] font-semibold text-blue-600 flex items-center gap-0.5">
-                              <ShieldCheck className="w-3.5 h-3.5" /> Resmi
-                            </span>
-                          ) : (
-                            <span className="text-[11px] font-semibold text-purple-600 flex items-center gap-0.5">
-                              <Sparkles className="w-3.5 h-3.5" /> OSINT
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Camera Title */}
-                        <h4 className="text-sm font-bold text-slate-900 line-clamp-1 mb-1">
-                          {cam.name}
-                        </h4>
-                        <p className="text-xs text-slate-500 flex items-center gap-1 mb-3">
-                          <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          <span className="truncate">{cam.locationName}</span>
-                        </p>
-                      </div>
-
-                      {/* Footer info */}
-                      <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-                        <span className="truncate">{cam.sourceName}</span>
-                        <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {filteredCameras.length === 0 && (
-                <div className="clay-card p-12 text-center text-slate-500">
-                  <Filter className="w-8 h-8 mx-auto mb-2 text-slate-400" />
-                  <p className="text-sm font-semibold text-slate-700">
-                    Tidak ada kamera yang cocok
-                  </p>
-                  <p className="text-xs text-slate-400">
-                    Coba ganti kata kunci pencarian atau matikan filter "Hanya Online".
-                  </p>
-                </div>
-              )}
-            </div>
-          </>
-        )}
-      </main>
-
-      {/* Footer */}
-      <footer className="mt-12 py-8 px-4 sm:px-8 bg-white border-t border-slate-200/80 text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
-          <div>
-            <p className="font-bold text-slate-700">
-              PWT360 &bull; Platform Eksplorasi CCTV & Ruang Kota Purwokerto
-            </p>
-            <p className="text-slate-400 text-[11px] mt-0.5">
-              Menghubungkan data siaran publik ATCS Banyumas, YouTube Live, dan sensor terbuka untuk kenyamanan warga.
-            </p>
+            ))}
           </div>
-          <div className="flex items-center gap-4 text-slate-500">
-            <a
-              href="https://atcs.banyumaskab.go.id"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-blue-600 transition"
-            >
-              ATCS Banyumas
-            </a>
-            <span className="text-slate-300">&bull;</span>
-            <a
-              href="https://www.openstreetmap.org"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-blue-600 transition"
-            >
-              OpenStreetMap
-            </a>
-            <span className="text-slate-300">&bull;</span>
-            <span className="font-mono text-slate-400">v0.1.0</span>
-          </div>
-        </div>
-      </footer>
+        </section>
 
-      {/* Report Modal */}
-      {reportingCamera && (
-        <ReportModal
-          camera={reportingCamera}
-          onClose={() => setReportingCamera(null)}
+        {/* 4. FOOTER */}
+        <footer className="pt-8 pb-4 text-center text-xs font-bold text-[#565A85]">
+          <p>Contoh desain &bull; data kamera, lokasi, dan cuaca hanya ilustrasi</p>
+        </footer>
+      </div>
+
+      {/* Live Stream Pop-up Modal Player */}
+      {playingCamera && (
+        <LiveStreamModal
+          camera={playingCamera}
+          onClose={() => setPlayingCamera(null)}
         />
       )}
     </div>
